@@ -66,7 +66,7 @@ merged-ready pull request. Read `docs/FACTORY.md` for the process.
 - the same gate failing three times
 - needing to write outside your scope
 - a locked decision that looks wrong, with new evidence
-- you are running long and are not close to done: write a handoff into the task
+- you are running long and are not close to done: write a handoff into the task (`factory handoff`)
   first, so your replacement starts from what you learned
 
 Escalating early is doing the job. Grinding is not.

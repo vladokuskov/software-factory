@@ -18,6 +18,8 @@ FACTORY_HOME="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 . "$FACTORY_HOME/lib/init.sh"
 # shellcheck source=../lib/schedule.sh
 . "$FACTORY_HOME/lib/schedule.sh"
+# shellcheck source=../lib/handoff.sh
+. "$FACTORY_HOME/lib/handoff.sh"
 
 usage() {
   cat <<'USAGE'
@@ -28,6 +30,8 @@ factory <command> [args]
                           run the project's gates; counts retries per task
   cycle <verb>            append | count | summary | log
   escalate --to lead|human --task ID --reason TEXT [--detail TEXT]
+  handoff --task ID --file NOTE --reason TEXT [--from AGENT]
+                          hand a task to a replacement agent, on the record
   scope <set|check|show>  declared file scope for an in-flight task
   current <get|set|clear> which task this working tree is on (branch-derived)
   config <show|get PATH>  resolved config (defaults merged with .factory/config.json)
@@ -276,6 +280,7 @@ case "${1:-}" in
   init)     shift; cmd_init "$@";;
   link)     shift; cmd_link "$@";;
   schedule) shift; cmd_schedule "$@";;
+  handoff)  shift; cmd_handoff "$@";;
   version)  printf 'factory %s\n' "$(cat "$FACTORY_HOME/VERSION" 2>/dev/null || echo dev)";;
   -h|--help|help|"") usage;;
   *) die "unknown command '$1' (try: factory help)";;

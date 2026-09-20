@@ -80,7 +80,7 @@ factory cycle summary
   context back for a third attempt. Record it:
   `factory escalate --to lead --task <id> --reason 'restarted after N cycles'`
 - **Worker running long:** ask it directly whether it is close to closing out.
-  If not, have it write a handoff into the task, then replace it.
+  If not, have it write a handoff into the task (`factory handoff`), then replace it.
 - **Worker gone quiet with a red gate:** the `TeammateIdle` hook should push it
   back to work. If it does not, message it yourself. Note whether the hook fired,
   because whether `TeammateIdle` can actually block is an open question recorded

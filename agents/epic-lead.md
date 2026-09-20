@@ -56,7 +56,7 @@ This is the part that is easy to skip and expensive to skip.
   on the task with the accumulated review findings as input. A fresh context
   beats a worn one, every time.
 - If a worker is running long, ask it directly whether it is close to closing
-  out. If it is not, have it write a handoff into the task and replace it.
+  out. If it is not, have it write a handoff into the task (`factory handoff`) and replace it.
 - If you are being retired yourself, write a short handoff into the epic but
   stay running so your replacement can ask you questions. Do not shut down
   until it says it has what it needs.

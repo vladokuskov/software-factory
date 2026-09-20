@@ -108,6 +108,7 @@ cycle_cmd_summary() {
                              | map(select(([.[].round // 0] | unique | length) > 2) | .[0].task)),
             escalations: ([$all[] | select(.event=="escalation")]
                           | map({task,to,reason,agent,ts})),
-            gateRetryLimits: ([$all[] | select(.event=="gate_retry_limit")] | map({task,retries,ts}))
+            gateRetryLimits: ([$all[] | select(.event=="gate_retry_limit")] | map({task,retries,ts})),
+            handoffs: ([$all[] | select(.event=="handoff")] | map({task,from,reason,rounds,ts}))
           }'
 }

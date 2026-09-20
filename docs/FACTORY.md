@@ -141,6 +141,17 @@ watches for it:
   running, so the incoming lead can ask it clarifying questions. Do not shut it
   down until the new lead says it has what it needs.
 
+Every replacement goes through one command, so handoffs are shaped the same way
+and land in the cycle log:
+
+    factory handoff --task <id> --file <note> --reason '<why this agent is being replaced>'
+
+The note says what was tried, what was learned, what was ruled out and why, and
+what the next step is. The test is the same as for the task itself: the next
+agent should be able to continue from the handoff and the task alone. A rising
+handoff count in the weekly summary is a task-sizing signal, not a worker
+problem.
+
 ## Review policy
 
 Every PR gets, in parallel:
