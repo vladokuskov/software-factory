@@ -33,6 +33,14 @@ merged-ready pull request. Read `docs/FACTORY.md` for the process.
    gate fails with a confusing "command not found".
 4. **Implement.** Smallest change that satisfies every criterion. Tests are part
    of the task, not a follow-up.
+
+   **Every test must be able to fail.** Before you open the PR, for each
+   criterion name the test that goes red if you delete or reverse the behaviour
+   behind it. A sort with no tie in the fixture, a "matches `list`'s format"
+   test that asserts a hardcoded string, a delete test that never checks the
+   store afterwards: all three passed with the behaviour removed, and the
+   adversarial reviewer sent all three back. Do that check yourself first, it
+   is cheaper than a round.
 5. **Gates.** `factory gate` must be green before you open anything. They also
    run automatically on every edit, so a red gate is a stop, not a warning.
 6. **PR.** Push the branch, open the PR, and link it:

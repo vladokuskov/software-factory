@@ -59,6 +59,11 @@ factory doctor               # must show green hooks before you write anything
 The smallest change that satisfies every criterion. Tests are part of the task,
 not a follow-up.
 
+**Every test must be able to fail.** For each criterion, name the test that goes
+red if the behaviour behind it is deleted or reversed. If you cannot, the test
+is decoration and the adversarial reviewer will say so; sabotage your own
+change for a minute and see what stays green.
+
 The guardrails are working with you here, not against you:
 
 - A **denied write** means the path is out of scope or sensitive. That is

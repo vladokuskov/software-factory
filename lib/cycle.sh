@@ -85,7 +85,14 @@ cycle_cmd_summary() {
   local since=""
   while [ $# -gt 0 ]; do case "$1" in --since) since="$2"; shift 2;; *) shift;; esac; done
   local dir; dir="$(factory_dir)/cycles"
-  [ -d "$dir" ] || { echo '{"tasks":0,"rounds":0,"byTask":[],"escalations":[]}'; return; }
+  # A missing directory is not the same as a quiet week. `factory init` creates
+  # it, so if it is gone something deleted it, and the retro must not read the
+  # zeros below as "nothing happened".
+  [ -d "$dir" ] || {
+    jq -nc --arg d "$dir" '{tasks:0,rounds:0,byTask:[],escalations:[],
+      warning:("no cycle log at " + $d + ": the directory is missing, not empty. If any PR was reviewed in this window, the log was deleted; check git history for .factory/cycles before concluding the week was quiet.")}'
+    return
+  }
   # shellcheck disable=SC2046
   cat $(find "$dir" -name '*.jsonl' 2>/dev/null) 2>/dev/null \
     | jq -s --arg since "$since" '

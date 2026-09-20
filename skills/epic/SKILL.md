@@ -50,6 +50,11 @@ For each task:
   diff*. "Handles errors properly" is not a criterion. "Returns `no matches` and
   exit code 0 when nothing matches" is. A task without these is rejected at
   creation, by a hook, deliberately.
+- **Input contract** — for anything that takes input, say what happens with
+  none, with more than expected, and with malformed input. Pinning the output
+  strings and leaving this open is the pattern that cost a review round on
+  every task of the first epic: each worker chose differently, and one chose
+  "silently ignore the extra operand" on a delete.
 - **File scope** — the specific paths this task may write. Tasks in the same wave
   must not overlap.
 - **Out of scope** — what it must leave alone. Usually the more useful half.
