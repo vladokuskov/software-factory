@@ -19,7 +19,11 @@ project_root() {
     [ -f "$d/.factory/config.json" ] && { printf '%s\n' "$d"; return; }
     d="$(dirname "$d")"
   done
-  git rev-parse --show-toplevel 2>/dev/null || die "not in a factory project (no .factory/config.json found above $PWD)"
+  git rev-parse --show-toplevel 2>/dev/null || return 1
+}
+
+require_project_root() {
+  project_root || die "not in a factory project (no .factory/config.json found above $PWD)"
 }
 
 # A git worktree gets its own checkout, so per-worktree .factory directories
@@ -32,7 +36,7 @@ main_root() {
     local m; m="$(dirname "$common")"
     [ -d "$m" ] && { printf '%s\n' "$m"; return; }
   fi
-  project_root
+  require_project_root
 }
 
 factory_dir() { printf '%s/.factory\n' "$(main_root)"; }

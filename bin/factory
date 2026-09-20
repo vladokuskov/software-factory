@@ -69,7 +69,7 @@ cmd_gate() {
       *) die "gate: unknown arg $1";;
     esac
   done
-  local root; root="$(project_root)"
+  local root; root="$(require_project_root)"
   cd "$root"
 
   local order names results=() failed=0

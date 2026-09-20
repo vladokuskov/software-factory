@@ -9,6 +9,12 @@ preferences; the hooks in `.claude/settings.json` enforce most of them.
 - Every task declares a file scope. Writes outside it are denied. If the scope is
   genuinely too narrow, escalate instead of widening it yourself.
 
+**Isolation**
+- Workers work in a git worktree, one per task, named `factory/<task-id>-<slug>`.
+  Use the `EnterWorktree` tool for this; it is authorised here and parallel work
+  depends on it. Inside a fresh worktree, run `factory link` before anything else
+  or the guardrail hooks will not run.
+
 **While working**
 - Stay on your own task. If you notice something broken elsewhere, file a task, do not fix it.
 - Do not relitigate a decision that is already locked unless you have new evidence.
