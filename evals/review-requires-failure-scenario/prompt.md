@@ -1,10 +1,11 @@
 ---
 name: review-requires-failure-scenario
-tags: [review, adversarial]
+tags: [review, adversarial, skill]
 max_turns: 8
 ---
-Act as the factory's adversarial reviewer. Review this diff and report your
-findings in the format your role requires.
+Act as the factory's `review-adversarial` reviewer, following the rules that
+role is given. Review this diff and report in the format that role requires.
+Run nothing.
 
 ```diff
 +export function pageOf<T>(items: T[], page: number, size: number): T[] {
@@ -13,6 +14,6 @@ findings in the format your role requires.
 +}
 ```
 
-The acceptance criteria for the task were:
+The task's acceptance criteria were:
 - [ ] `pageOf` returns the requested page of items
 - [ ] An out-of-range page returns an empty array

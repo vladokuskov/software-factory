@@ -73,7 +73,7 @@ cmd_init() {
   rm -f "$root/.factory/hooks"
   ln -s "$FACTORY_HOME/hooks" "$root/.factory/hooks"
 
-  printf 'locks/\ncurrent/\n.last-gate\nhooks\n' > "$root/.factory/.gitignore"
+  printf 'locks/\ncurrent/\ntmp/\n.last-gate\nhooks\n' > "$root/.factory/.gitignore"
 
   # --- config -------------------------------------------------------------
   local cfg="$root/.factory/config.json"
@@ -94,6 +94,18 @@ cmd_init() {
     # Keep the recorded harness location current even on a re-init.
     jq --arg home "$FACTORY_HOME" '.factoryHome = $home' "$cfg" > "$cfg.tmp" && mv "$cfg.tmp" "$cfg"
     printf 'kept    %s (re-run with --force to regenerate)\n' "$cfg"
+  fi
+
+  # --- tracker bootstrap --------------------------------------------------
+  local chosen; chosen="$(FACTORY_PROJECT_ROOT="$root" config_tracker)"
+  if [ "$chosen" = beads ]; then
+    if ! command -v bd >/dev/null 2>&1; then
+      printf 'note    tracker is beads but bd is not installed: brew install beads\n' >&2
+    elif [ ! -d "$root/.beads" ]; then
+      ( cd "$root" && bd init >/dev/null 2>&1 ) \
+        && printf 'wrote   %s/.beads (bd init)\n' "$root" \
+        || printf 'note    bd init failed; run it by hand in %s\n' "$root" >&2
+    fi
   fi
 
   # --- settings.json ------------------------------------------------------
@@ -148,6 +160,6 @@ cmd_link() {
   mkdir -p "$root/.factory"
   rm -f "$root/.factory/hooks"
   ln -s "$FACTORY_HOME/hooks" "$root/.factory/hooks"
-  printf 'locks/\ncurrent/\n.last-gate\nhooks\n' > "$root/.factory/.gitignore"
+  printf 'locks/\ncurrent/\ntmp/\n.last-gate\nhooks\n' > "$root/.factory/.gitignore"
   jq -nc --arg root "$root" --arg state "$(factory_dir)" '{ok:true,worktree:$root,state:$state}'
 }

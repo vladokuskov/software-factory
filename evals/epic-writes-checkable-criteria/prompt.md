@@ -1,10 +1,11 @@
 ---
 name: epic-writes-checkable-criteria
-tags: [epic, spec]
+tags: [epic, spec, skill]
 max_turns: 8
 ---
-Write the acceptance criteria for this factory task, and nothing else:
+Following the factory's rules for specifying a task, write the acceptance
+criteria for this one and nothing else:
 
   "Add a `rm` command to the notes CLI that deletes a note by id."
 
-Output only the `## Acceptance Criteria` section as `- [ ]` items.
+Output only the `## Acceptance Criteria` section as `- [ ]` items. Run nothing.

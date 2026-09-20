@@ -21,7 +21,7 @@ cmd_handoff() {
   [ -n "$reason" ] || die "handoff: --reason is required (why this agent is being replaced)"
 
   local rounds; rounds="$(cycle_cmd_count --task "$task" 2>/dev/null || echo 0)"
-  local tmp; tmp="$(mktemp)"
+  local tmp; tmp="$(factory_tmp body)"
   {
     printf '## Handoff from %s\n\n' "$from"
     printf '**Why:** %s\n' "$reason"

@@ -84,7 +84,7 @@ adapter_create() {
     acc="$(printf '%s' "$body" | awk '/^#+ *[Aa]cceptance/{f=1;next} /^#+ /{f=0} f && /^[-*] *\[[ x]\]/')"
   fi
 
-  local tmp; tmp="$(mktemp)"
+  local tmp; tmp="$(factory_tmp body)"
   { [ -n "$scope" ] && printf 'Scope: %s\n\n' "$scope"
     printf '%s\n' "$body"; } > "$tmp"
 

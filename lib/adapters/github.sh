@@ -111,7 +111,7 @@ adapter_create() {
   [ -n "$title" ] || die "create: --title is required"
   _ensure_labels
 
-  local tmp; tmp="$(mktemp)"
+  local tmp; tmp="$(factory_tmp body)"
   { [ -n "$epic" ] && printf 'Epic: #%s\n' "$epic"
     [ -n "$deps" ] && printf 'Depends-on: %s\n' "$(printf '%s' "$deps" | sed 's/\([0-9][0-9]*\)/#\1/g')"
     [ -n "$scope" ] && printf 'Scope: %s\n' "$scope"

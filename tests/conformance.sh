@@ -75,7 +75,29 @@ MD
   check "update done"        "$("$F" task update "$task" --status "done" | jq -r .ok)" "true"
   check "status is done"     "$("$F" task show "$task" | jq -r .status)" "done"
 
+  # The unattended scanner could not file anything because create shelled out to
+  # the system mktemp, which a sandboxed agent may not write to.
+  check "create uses no system temp dir" \
+    "$(grep -rl 'mktemp' "$FACTORY_HOME/lib/adapters" 2>/dev/null | wc -l | tr -d ' ')" "0"
+
   rm -f "$dir/.conf-body.md" "$dir/.conf-comment.md"
+}
+
+current_suite() {
+  local dir="$1"
+  printf '\ncurrent-task binding\n'
+  cd "$dir" || return
+  local t; t="$("$F" task create --title "Binding probe" | jq -r .id)"
+  "$F" task claim "$t" --agent agent-a >/dev/null
+  "$F" current set --task "$t" >/dev/null
+  check "binding is read back"        "$("$F" current get | head -1)" "$t"
+  # A binding that outlives its task silently gates every write in the tree
+  # against a stale scope. link-pr and a terminal status must release it.
+  "$F" task link-pr "$t" --pr 77 >/dev/null
+  check "link-pr releases the binding" "$("$F" current get | head -1)" ""
+  "$F" current set --task "$t" >/dev/null
+  check "stale binding self-expires"   "$("$F" current get | head -1)" ""
+  "$F" task update "$t" --status "done" >/dev/null
 }
 
 concurrency_suite() {
@@ -133,6 +155,7 @@ LIVE_TRACKER="${FACTORY_TRACKER:-}"
 unset FACTORY_TRACKER
 run_suite "file adapter" "$TMP"
 concurrency_suite "$TMP"
+current_suite "$TMP"
 scope_suite "$TMP"
 cycle_suite "$TMP"
 rm -rf "$TMP"

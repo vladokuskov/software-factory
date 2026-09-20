@@ -59,7 +59,29 @@ cmd_task() {
   . "$adapter"
   local fn; fn="adapter_$(printf '%s' "$verb" | tr '-' '_')"
   command -v "$fn" >/dev/null 2>&1 || die "tracker '$tracker' does not implement '$verb'"
-  "$fn" "$@"
+  local out rc=0
+  out="$("$fn" "$@")" || rc=$?
+  printf '%s\n' "$out"
+
+  # Once a task reaches a PR or is finished, release this tree's binding to it.
+  case "$verb" in
+    link-pr) _release_current "${1:-}";;
+    update)  case " $* " in *" done "*|*" review "*) _release_current "${1:-}";; esac;;
+  esac
+  return "$rc"
+}
+
+_release_current() {
+  local task="$1" dir key
+  [ -n "$task" ] || return 0
+  dir="$(factory_dir)/current"
+  [ -d "$dir" ] || return 0
+  local f
+  for f in "$dir"/*.task; do
+    [ -f "$f" ] || continue
+    [ "$(cat "$f" 2>/dev/null)" = "$task" ] && rm -f "$f"
+  done
+  return 0
 }
 
 # --------------------------------------------------------------------------
@@ -225,7 +247,16 @@ cmd_current() {
       case "$branch" in
         factory/*) printf '%s\n' "$(printf '%s' "${branch#factory/}" | sed -E 's/-.*$//')"; return;;
       esac
-      [ -f "$dir/$key.task" ] && { cat "$dir/$key.task"; printf '\n'; return; }
+      if [ -f "$dir/$key.task" ]; then
+        local t; t="$(cat "$dir/$key.task")"
+        # A binding outlives its usefulness once the task has left the bench.
+        # A stale one silently gates every write in this tree against another
+        # task's scope, which is maddening to diagnose, so drop it.
+        case "$(cmd_task show "$t" 2>/dev/null | jq -r '.status // "unknown"')" in
+          done|review) rm -f "$dir/$key.task";;
+          *) printf '%s\n' "$t"; return;;
+        esac
+      fi
       printf '\n'
       ;;
     *) die "current: get|set|clear";;
@@ -261,6 +292,8 @@ cmd_doctor() {
   printf 'state dir:       %s%s\n' "$(factory_dir)" "$([ "$(main_root)" != "$root" ] && echo '  (shared from the main worktree)' || true)"
   if [ -L "$root/.factory/hooks" ] && [ -d "$root/.factory/hooks" ]; then printf 'hooks:           ok\n'
   else printf 'hooks:           MISSING (run: factory link)\n'; ok=1; fi
+  local bound; bound="$(cmd_current get 2>/dev/null | head -1)"
+  printf 'current task:    %s\n' "${bound:-(none)}"
   printf 'gates:           %s\n' "$(config_get_raw gates | jq -r 'keys | join(", ") | if . == "" then "(none configured)" else . end')"
   printf 'default branch:  %s\n' "$(config_default_branch)"
   printf 'open tasks:      %s\n' "$(cmd_task list 2>/dev/null | jq 'map(select(.status != "done")) | length' 2>/dev/null || echo '?')"

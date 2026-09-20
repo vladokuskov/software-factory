@@ -84,5 +84,14 @@ json_ok()  { jq -nc '{ok:true}'; }
 
 now_iso() { date -u +%Y-%m-%dT%H:%M:%SZ; }
 
+# A scratch file inside the project. The system temp dir is outside the working
+# directory, which a sandboxed unattended agent is not allowed to write to, so
+# `mktemp` fails there with no output and takes the whole command down with it.
+factory_tmp() {
+  local d; d="$(factory_dir)/tmp"
+  mkdir -p "$d"
+  printf '%s/%s.%s\n' "$d" "${1:-scratch}" "$$"
+}
+
 # Slugify for branch names and ids.
 slug() { printf '%s' "$1" | tr '[:upper:]' '[:lower:]' | sed -e 's/[^a-z0-9]\{1,\}/-/g' -e 's/^-//' -e 's/-$//' | cut -c1-48; }
