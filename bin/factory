@@ -53,7 +53,7 @@ cmd_task() {
   [ -f "$adapter" ] || die "unknown tracker '$tracker' (no adapter at $adapter)"
   # shellcheck disable=SC1090
   . "$adapter"
-  local fn="adapter_$(printf '%s' "$verb" | tr '-' '_')"
+  local fn; fn="adapter_$(printf '%s' "$verb" | tr '-' '_')"
   command -v "$fn" >/dev/null 2>&1 || die "tracker '$tracker' does not implement '$verb'"
   "$fn" "$@"
 }
@@ -72,7 +72,7 @@ cmd_gate() {
   local root; root="$(require_project_root)"
   cd "$root"
 
-  local order names results=() failed=0
+  local order results=() failed=0
   order="$(config_get_raw gateOrder | jq -r '.[]')"
   [ "$quick" -eq 1 ] && order="$(printf '%s\n' "$order" | grep -E '^(format|lint|typecheck)$' || true)"
 

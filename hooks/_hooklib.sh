@@ -8,6 +8,8 @@ FACTORY_HOME="${FACTORY_HOME:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 . "$FACTORY_HOME/lib/glob.sh"
 . "$FACTORY_HOME/lib/cycle.sh"
 
+# Used by every hook that sources this file.
+# shellcheck disable=SC2034
 FACTORY="$FACTORY_HOME/bin/factory"
 
 hook_input() { cat; }

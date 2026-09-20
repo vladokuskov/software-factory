@@ -45,6 +45,11 @@ MD
   check "show: status"      "$(printf '%s' "$rec" | jq -r .status)"            "pending"
   check "show: acceptance"  "$(printf '%s' "$rec" | jq -r '.acceptance|length')" "2"
   check "show: scope"       "$(printf '%s' "$rec" | jq -r '.scope|join(",")')" "src/**,tests/**"
+  check "show: priority"    "$(printf '%s' "$rec" | jq -r '.priority')"          "2"
+  # --priority was parsed and silently dropped by the github adapter.
+  hi="$("$F" task create --epic "$epic" --title "Urgent conformance task" --priority 1 | jq -r .id)"
+  check "priority round-trips" "$("$F" task show "$hi" | jq -r .priority)" "1"
+  "$F" task update "$hi" --status "done" >/dev/null
 
   check "ready: contains task" "$("$F" task ready --epic "$epic" | jq -r --arg t "$task" 'map(.id)|index($t) != null')" "true"
   check "ready: excludes epic" "$("$F" task ready --epic "$epic" | jq -r --arg e "$epic" 'map(.id)|index($e) == null')" "true"
@@ -67,7 +72,7 @@ MD
   # The round trip, not just the write: link-pr used to report ok and leave
   # `show` reading pr back as null.
   check "link-pr round-trips" "$("$F" task show "$task" | jq -r '.pr')" "99"
-  check "update done"        "$("$F" task update "$task" --status done | jq -r .ok)" "true"
+  check "update done"        "$("$F" task update "$task" --status "done" | jq -r .ok)" "true"
   check "status is done"     "$("$F" task show "$task" | jq -r .status)" "done"
 
   rm -f "$dir/.conf-body.md" "$dir/.conf-comment.md"

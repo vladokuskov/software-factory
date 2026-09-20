@@ -12,7 +12,7 @@ bad() { FAIL=$((FAIL+1)); printf '  FAIL  %s\n       %s\n' "$1" "${2:-}"; }
 check() { if [ "$2" = "$3" ]; then ok "$1"; else bad "$1" "got [$2] want [$3]"; fi; }
 
 TMP="$(mktemp -d)"
-cd "$TMP"
+cd "$TMP" || exit 1
 git init -q; git config user.email t@t; git config user.name t
 mkdir -p src/components src/lib src/auth migrations
 cat > package.json <<'JSON'

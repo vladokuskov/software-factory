@@ -1,0 +1,21 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: shellcheck
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq shellcheck
+          shellcheck -S warning bin/factory bin/factory-cron lib/*.sh lib/adapters/*.sh hooks/*.sh tests/*.sh
+      - name: syntax
+        run: for f in bin/factory bin/factory-cron lib/*.sh lib/adapters/*.sh hooks/*.sh tests/*.sh; do bash -n "$f"; done
+      - name: adapter conformance (file)
+        run: tests/conformance.sh
+      - name: hook behaviour
+        run: tests/hooks.sh

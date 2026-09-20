@@ -66,7 +66,7 @@ config_get_raw() { config_json | jq -c ".${1}"; }
 
 config_tracker() {
   local t; t="${FACTORY_TRACKER:-$(config_get tracker)}"
-  [ -n "$t" ] || t=file
+  [ -n "$t" ] || t="file"
   printf '%s\n' "$t"
 }
 

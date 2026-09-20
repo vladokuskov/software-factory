@@ -120,8 +120,13 @@ adapter_create() {
   } > "$tmp"
 
   local label=factory:task; [ "$type" = epic ] && label=factory:epic
+  # _normalise reads priority back off these labels, so creating without one
+  # silently dropped --priority before.
+  local plabel=""
+  case "$priority" in 0|1) plabel=priority:high;; 3|4) plabel=priority:low;; esac
+  [ -n "$plabel" ] && _gh label create "$plabel" --color ededed --description "software factory" >/dev/null 2>&1
   local url num
-  url="$(_gh issue create --title "$title" --body-file "$tmp" --label "$label")"
+  url="$(_gh issue create --title "$title" --body-file "$tmp" --label "$label" ${plabel:+--label "$plabel"})"
   rm -f "$tmp"
   num="$(printf '%s' "$url" | sed 's|.*/||')"
 

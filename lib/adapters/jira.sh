@@ -124,11 +124,14 @@ adapter_create() {
   [ -n "$header" ] && header="${header}"$'\n'
 
   local itype=Task; [ "$type" = epic ] && itype=Epic
+  local pname=""
+  case "$priority" in 0|1) pname=High;; 3|4) pname=Low;; esac
   local payload
   payload="$(jq -nc --arg p "$(_jira_project)" --arg s "$title" \
-      --arg d "${header}${body}" --arg t "$itype" --arg parent "$epic" '
+      --arg d "${header}${body}" --arg t "$itype" --arg parent "$epic" --arg pri "$pname" '
       {fields: ({project:{key:$p}, summary:$s, description:$d, issuetype:{name:$t}}
-                + (if $parent == "" then {} else {parent:{key:$parent}} end))}')"
+                + (if $parent == "" then {} else {parent:{key:$parent}} end)
+                + (if $pri == "" then {} else {priority:{name:$pri}} end))}')"
   local out; out="$(_jira POST "/2/issue" "$payload")"
   local key; key="$(printf '%s' "$out" | jq -r '.key // empty')"
   [ -n "$key" ] || { json_err "jira create failed: $(printf '%s' "$out" | jq -c '.errors // .errorMessages // .')"; return 1; }
@@ -145,7 +148,7 @@ adapter_show() {
 adapter_list() {
   local epic=""
   while [ $# -gt 0 ]; do case "$1" in --epic) epic="$2"; shift 2;; *) shift;; esac; done
-  local jql="project = $(_jira_project) ORDER BY created ASC"
+  local jql; jql="project = $(_jira_project) ORDER BY created ASC"
   [ -n "$epic" ] && jql="project = $(_jira_project) AND (parent = $epic OR key = $epic) ORDER BY created ASC"
   local out="[]" row
   while IFS= read -r row; do
@@ -230,7 +233,7 @@ adapter_update() {
     # in-progress plus a label, the same shape the beads adapter uses.
     review)      _jira PUT "/2/issue/$id" '{"update":{"labels":[{"add":"factory-review"}]}}' >/dev/null 2>&1 || true
                  _jira_transition_to "$id" indeterminate || true;;
-    done)        _jira_transition_to "$id" done || die "update: no transition to a done status from here";;
+    done)        _jira_transition_to "$id" "done" || die "update: no transition to a done status from here";;
     blocked)     _jira PUT "/2/issue/$id" '{"update":{"labels":[{"add":"factory-blocked"}]}}' >/dev/null 2>&1 || true;;
     *) die "update: invalid status '$status'";;
   esac
