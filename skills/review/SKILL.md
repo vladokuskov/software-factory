@@ -49,6 +49,12 @@ That one is a multi-agent pass on Anthropic's infrastructure and finds a
 different distribution of things than local reviewers do. Fold its findings in
 with the rest.
 
+It is a hosted service and can be switched off server-side; when it is you get
+`Ultrareview is currently unavailable`. That is not a configuration problem and
+not worth retrying. Say it was unavailable, carry on with the three local
+reviewers, and **do not write a cycle-log entry for a review that did not run** —
+a fabricated round corrupts the only dataset the factory has about itself.
+
 ## 3. Triage
 
 Merge the findings, dropping duplicates. Where two reviewers disagree, say so
@@ -70,13 +76,18 @@ retro reads, and without it the cycle budget is unenforceable.
 
 ```bash
 factory cycle append --task ${TASK} --pr $PR \
-  --reviewer review-adversarial --model opus \
+  --round <this cycle> --reviewer review-adversarial --model opus \
   --findings '{"critical":0,"important":2,"minor":3}' \
   --outcome changes_requested --tokens <n>
 ```
 
-`--outcome` is `approved` or `changes_requested`. Repeat for each reviewer,
-including `ultrareview`.
+`--outcome` is `approved` or `changes_requested`. Repeat for each reviewer that
+actually ran, `ultrareview` included when it did.
+
+**Pass `--round` explicitly**, the same value for every reviewer in this cycle.
+Reviewers run in parallel and all belong to one round; logging them as separate
+rounds trips the cycle budget on the first pass. `factory cycle count --task
+<id>` gives you the rounds so far, so this cycle is that plus one.
 
 ## 5. Report
 

@@ -64,6 +64,9 @@ MD
   printf 'a comment\n' > "$dir/.conf-comment.md"
   check "comment"            "$("$F" task comment "$task" --body-file "$dir/.conf-comment.md" | jq -r .ok)" "true"
   check "link-pr"            "$("$F" task link-pr "$task" --pr 99 | jq -r .ok)" "true"
+  # The round trip, not just the write: link-pr used to report ok and leave
+  # `show` reading pr back as null.
+  check "link-pr round-trips" "$("$F" task show "$task" | jq -r '.pr')" "99"
   check "update done"        "$("$F" task update "$task" --status done | jq -r .ok)" "true"
   check "status is done"     "$("$F" task show "$task" | jq -r .status)" "done"
 
@@ -105,9 +108,16 @@ cycle_suite() {
       --findings '{"critical":0,"important":1,"minor":0}' --outcome changes_requested >/dev/null
   "$F" cycle append --task c-1 --reviewer review-intent --model fable \
       --findings '{"critical":0,"important":0,"minor":0}' --outcome approved >/dev/null
-  check "round count" "$("$F" cycle count --task c-1)" "3"
+  # Three reviewers in one cycle is ONE round, not three.
+  check "parallel reviewers = 1 round" "$("$F" cycle count --task c-1)" "1"
+  "$F" cycle append --task c-1 --reviewer review-adversarial --model opus \
+      --findings '{"critical":0,"important":1,"minor":0}' --outcome changes_requested >/dev/null
+  check "same reviewer again = round 2" "$("$F" cycle count --task c-1)" "2"
+  check "not over limit at 2 rounds" "$("$F" cycle summary | jq -r '.overCycleLimit|index("c-1") == null')" "true"
+  "$F" cycle append --task c-1 --reviewer review-adversarial --model opus \
+      --findings '{"critical":0,"important":1,"minor":0}' --outcome changes_requested >/dev/null
   "$F" escalate --to lead --task c-1 --reason "over cycle limit" >/dev/null
-  check "flagged over limit" "$("$F" cycle summary | jq -r '.overCycleLimit|index("c-1") != null')" "true"
+  check "over limit at 3 rounds" "$("$F" cycle summary | jq -r '.overCycleLimit|index("c-1") != null')" "true"
   check "escalation recorded" "$("$F" cycle summary | jq -r '[.escalations[]|select(.task=="c-1")]|length')" "1"
 }
 

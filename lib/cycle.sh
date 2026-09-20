@@ -34,7 +34,10 @@ cycle_cmd_append() {
   done
   [ -n "$task" ] || die "cycle append: --task is required"
   [ -n "$findings" ] || findings='{"critical":0,"important":0,"minor":0}'
-  if [ -z "$round" ]; then round="$(( $(cycle_cmd_count --task "$task") + 1 ))"; fi
+  # A round is one review CYCLE, not one reviewer. Several reviewers run in
+  # parallel and all belong to the same round, so reuse the current round until
+  # this reviewer has already reported in it.
+  if [ -z "$round" ]; then round="$(_cycle_next_round "$task" "$reviewer")"; fi
   cycle_append "$task" "$(jq -nc \
     --arg event "$event" --arg reviewer "$reviewer" --arg model "$model" \
     --arg outcome "$outcome" --argjson findings "$findings" \
@@ -46,14 +49,28 @@ cycle_cmd_append() {
   jq -nc --arg t "$task" --argjson r "$round" '{ok:true,task:$t,round:$r}'
 }
 
-# Number of review rounds recorded for a task.
+# The round a reviewer's next entry belongs to: the current round if it has not
+# reported in it yet, otherwise the next one.
+_cycle_next_round() {
+  local task="$1" reviewer="$2" f
+  f="$(cycle_file "$task")"
+  [ -f "$f" ] || { echo 1; return; }
+  jq -s --arg r "$reviewer" '
+    [.[] | select(.event == "review")] as $rev
+    | ($rev | map(.round // 0) | max // 0) as $cur
+    | if $cur == 0 then 1
+      elif ($rev | any(.round == $cur and .reviewer == $r)) then $cur + 1
+      else $cur end' "$f"
+}
+
+# Number of review rounds recorded for a task (distinct rounds, not entries).
 cycle_cmd_count() {
   local task="" f
   while [ $# -gt 0 ]; do case "$1" in --task) task="$2"; shift 2;; *) shift;; esac; done
   [ -n "$task" ] || die "cycle count: --task is required"
   f="$(cycle_file "$task")"
   [ -f "$f" ] || { echo 0; return; }
-  jq -s '[.[] | select(.event == "review")] | length' "$f"
+  jq -s '[.[] | select(.event == "review") | .round // 0] | unique | length' "$f"
 }
 
 cycle_cmd_log() {
@@ -76,10 +93,11 @@ cycle_cmd_summary() {
         | . as $all
         | {
             tasks: ([$all[].task] | unique | length),
-            rounds: ([$all[] | select(.event=="review")] | length),
+            rounds: ([$all[] | select(.event=="review") | {task, round}] | unique | length),
             byTask: ([$all[] | select(.event=="review")] | group_by(.task) | map({
               task: .[0].task,
-              rounds: length,
+              rounds: ([.[].round // 0] | unique | length),
+              reviews: length,
               critical: ([.[].findings.critical // 0] | add),
               important: ([.[].findings.important // 0] | add),
               minor: ([.[].findings.minor // 0] | add),
@@ -87,7 +105,7 @@ cycle_cmd_summary() {
               reviewers: ([.[].reviewer] | unique)
             }) | sort_by(-.rounds)),
             overCycleLimit: ([$all[] | select(.event=="review")] | group_by(.task)
-                             | map(select(length > 2) | .[0].task)),
+                             | map(select(([.[].round // 0] | unique | length) > 2) | .[0].task)),
             escalations: ([$all[] | select(.event=="escalation")]
                           | map({task,to,reason,agent,ts})),
             gateRetryLimits: ([$all[] | select(.event=="gate_retry_limit")] | map({task,retries,ts}))

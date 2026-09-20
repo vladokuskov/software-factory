@@ -76,7 +76,8 @@ _normalise() {
        scope: $scope,
        priority: (if (.labels | any(.name == "priority:high")) then 1
                   elif (.labels | any(.name == "priority:low")) then 3 else 2 end),
-       pr: null,
+       pr: (((((.body // "") | capture("^PR: *#(?<n>[0-9]+)"; "im")).n) // null)
+            | if . == null then null else tonumber end),
        url: .url
      }'
 }
@@ -255,6 +256,14 @@ adapter_link_pr() {
   while [ $# -gt 0 ]; do case "$1" in --pr) pr="$2"; shift 2;; *) shift;; esac; done
   [ -n "$id" ] || die "link-pr: issue number required"
   [ -n "$pr" ] || die "link-pr: --pr is required"
+  # Record it in the body, not only as a comment: a comment is not readable by
+  # `show`, so the PR came back null on the round trip.
+  local body; body="$(_gh issue view "$id" --json body -q .body 2>/dev/null || true)"
+  printf '%s' "$body" | grep -qiE '^PR: *#[0-9]+' \
+    && body="$(printf '%s' "$body" | sed -E "s|^PR: *#[0-9]+|PR: #$pr|I")" \
+    || body="PR: #$pr
+$body"
+  printf '%s\n' "$body" | _gh issue edit "$id" --body-file - >/dev/null
   _gh issue comment "$id" --body "Pull request: #$pr" >/dev/null
   adapter_update "$id" --status review >/dev/null
   jq -nc --arg id "$id" --argjson pr "$pr" '{ok:true,id:$id,pr:$pr}'
