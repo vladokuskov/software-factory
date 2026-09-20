@@ -11,10 +11,10 @@ lint, typecheck, test and build gates, tracked in GitHub Issues.
 
 | suite | scope | result |
 |---|---|---|
-| `tests/conformance.sh` | 18 contract checks per tracker plus concurrency, scope and cycle-log checks | 36 hermetic (file) + 26 live, green on **file**, **github** and **beads** |
+| `tests/conformance.sh` | the adapter contract per tracker, plus concurrency, scope, current-binding and cycle-log checks | 40 hermetic (file), 67 with a live tracker, green on **file**, **github** and **beads** |
 | `tests/hooks.sh` | 22 checks: scope allow/deny, sensitive-path precedence, acceptance enforcement, gate detection, debounce, session briefing, fail-open | 22/22 |
 | `shellcheck -S warning` | every script in the harness | clean |
-| `evals/` | 5 behaviour cases for what only the prompts can carry | schema validated, one case run end to end |
+| `evals/` | 5 behaviour cases for what only the skills can carry | 13/15 responses, 4 of 5 cases clean, 3 runs each with a sonnet judge |
 
 ## Manual verification, by build phase
 
