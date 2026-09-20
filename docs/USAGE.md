@@ -48,11 +48,10 @@ About $4 per task with the full review cycle.
 ```
 
 Interactive, on Opus with the 1M context window at max effort. It interrogates
-the goal before accepting it, writes
-tasks with acceptance criteria that are checkable without reading the diff,
-groups them into waves with disjoint file scopes, and records the locked
-decisions and the shared resources. **This step decides every downstream cost**,
-so stay in it and argue with it.
+the goal before accepting it, writes tasks with acceptance criteria that are
+checkable without reading the diff, groups them into waves with disjoint file
+scopes, and records the locked decisions and the shared resources. **This step
+decides every downstream cost**, so stay in it and argue with it.
 
 Then:
 

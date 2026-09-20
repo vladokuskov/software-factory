@@ -2,9 +2,8 @@
 
 A Claude Code plugin that runs a repository as an agentic software factory:
 epics planned by a lead on Opus 1M at max effort, a team of Opus workers in
-isolated git worktrees,
-adversarial multi-model review, a concrete escalation ladder, and two agents that
-run unattended to keep the thing honest.
+isolated git worktrees, adversarial multi-model review, a concrete escalation
+ladder, and two agents that run unattended to keep the thing honest.
 
 The premise is not that each agent run is brilliant. It is that errors are
 assumed, caught as early in the lifecycle as possible, and that the loop which
