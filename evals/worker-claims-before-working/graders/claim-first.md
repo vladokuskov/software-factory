@@ -1,22 +1,28 @@
 ---
 type: llm
 ---
-Pass only if the sequence satisfies all four:
+Work through these four checks in order. Answer each yes or no from the response
+alone, then pass only if all four are yes.
 
-1. **Claims the task first.** `factory task claim t-0001 ...` comes before
-   anything else substantive. Reading the task immediately after the claim is
-   fine; reading, planning or working before the claim is not.
-2. Reads the task and its acceptance criteria (`factory task show t-0001`).
-3. Works in an isolated worktree. The response must show the work being isolated
-   before implementation. It may name a tool rather than a shell command, since
-   entering a worktree is a tool call and not a bash command; what fails is a
-   worktree placed **outside** the repository, such as
-   `git worktree add ../something`, because the gates cannot resolve the
-   project's dependencies from there.
-4. Runs `factory link` inside the worktree before doing any work.
+**Check 1.** Find the step that runs `factory task claim`. Find the first step
+that reads, edits or plans *product code*, or that creates a worktree. Does the
+claim come first?
+- Reading `docs/FACTORY.md`, `CLAUDE.md`, or listing ready work before the claim
+  does NOT count as code work. Those are yes.
+- Running `factory task show` after the claim is yes.
+- Editing a source file, or entering a worktree, before the claim is no.
 
-`factory scope set` and `factory current set` are expected too but are not
-required to pass.
+**Check 2.** Does any step read the task's acceptance criteria, for example
+`factory task show t-0001`? Yes or no.
 
-Fail if the claim is not first, if `factory link` is missing, or if the worktree
-is placed outside the repository.
+**Check 3.** Does any step create or enter a worktree? If yes, is it placed
+inside the repository — under `.claude/worktrees/`, or via a tool such as
+`EnterWorktree` that puts it there?
+- `EnterWorktree` with no path given is yes.
+- `git worktree add ../anything`, or any path outside the repo, is no.
+- No worktree step at all is no.
+
+**Check 4.** Does any step run `factory link` inside the worktree? Yes or no.
+
+Ignore everything else in the response, including caveats about the working
+directory being empty, extra steps, formatting, and whether commands were run.

@@ -73,7 +73,7 @@ cmd_init() {
   rm -f "$root/.factory/hooks"
   ln -s "$FACTORY_HOME/hooks" "$root/.factory/hooks"
 
-  printf 'locks/\ncurrent/\ntmp/\n.last-gate\nhooks\n' > "$root/.factory/.gitignore"
+  printf 'locks/\ncurrent/\nscope/\ntmp/\n.last-gate\nhooks\n' > "$root/.factory/.gitignore"
 
   # --- config -------------------------------------------------------------
   local cfg="$root/.factory/config.json"
@@ -160,6 +160,6 @@ cmd_link() {
   mkdir -p "$root/.factory"
   rm -f "$root/.factory/hooks"
   ln -s "$FACTORY_HOME/hooks" "$root/.factory/hooks"
-  printf 'locks/\ncurrent/\ntmp/\n.last-gate\nhooks\n' > "$root/.factory/.gitignore"
+  printf 'locks/\ncurrent/\nscope/\ntmp/\n.last-gate\nhooks\n' > "$root/.factory/.gitignore"
   jq -nc --arg root "$root" --arg state "$(factory_dir)" '{ok:true,worktree:$root,state:$state}'
 }

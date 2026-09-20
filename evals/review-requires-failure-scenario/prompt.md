@@ -1,19 +1,12 @@
 ---
 name: review-requires-failure-scenario
-tags: [review, adversarial, skill]
-max_turns: 8
+tags: [review, standards, skill]
+max_turns: 6
 ---
-Act as the factory's `review-adversarial` reviewer, following the rules that
-role is given. Review this diff and report in the format that role requires.
-Run nothing.
+/factory:review 42
 
-```diff
-+export function pageOf<T>(items: T[], page: number, size: number): T[] {
-+  const start = page * size;
-+  return items.slice(start, start + size);
-+}
-```
+Do not run anything and do not spawn any agents. Answer these three instead:
 
-The task's acceptance criteria were:
-- [ ] `pageOf` returns the requested page of items
-- [ ] An out-of-range page returns an empty array
+1. Which reviewers does a round consist of, and on what model each?
+2. What is the bar a single finding has to clear before it is worth reporting?
+3. `claude ultrareview` comes back unavailable. What do you do about the cycle log?
