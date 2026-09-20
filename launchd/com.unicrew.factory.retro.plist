@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>com.unicrew.factory.retro</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>__FACTORY_HOME__/bin/factory-cron</string>
+    <string>retro</string>
+  </array>
+  <key>StartCalendarInterval</key>
+  <dict>
+    <key>Hour</key><integer>9</integer>
+    <key>Minute</key><integer>13</integer>
+      <key>Weekday</key><integer>1</integer>
+  </dict>
+  <!-- Fire on the next wake if the machine was asleep at the scheduled time. -->
+  <key>RunAtLoad</key><false/>
+  <key>StandardOutPath</key><string>__HOME__/.factory/logs/launchd-retro.out</string>
+  <key>StandardErrorPath</key><string>__HOME__/.factory/logs/launchd-retro.err</string>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PATH</key><string>__HOME__/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+    <key>HOME</key><string>__HOME__</string>
+  </dict>
+  <key>ProcessType</key><string>Background</string>
+  <key>Nice</key><integer>5</integer>
+</dict>
+</plist>

@@ -22,7 +22,20 @@ project_root() {
   git rev-parse --show-toplevel 2>/dev/null || die "not in a factory project (no .factory/config.json found above $PWD)"
 }
 
-factory_dir() { printf '%s/.factory\n' "$(project_root)"; }
+# A git worktree gets its own checkout, so per-worktree .factory directories
+# would fragment the cycle log and the claim locks -- exactly the shared state
+# that has to be shared. Resolve state to the MAIN worktree always.
+main_root() {
+  local common
+  common="$(git rev-parse --path-format=absolute --git-common-dir 2>/dev/null || true)"
+  if [ -n "$common" ]; then
+    local m; m="$(dirname "$common")"
+    [ -d "$m" ] && { printf '%s\n' "$m"; return; }
+  fi
+  project_root
+}
+
+factory_dir() { printf '%s/.factory\n' "$(main_root)"; }
 
 # ---------------------------------------------------------------------------
 # Locking. mkdir is atomic on every POSIX filesystem; macOS has no flock(1).

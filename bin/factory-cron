@@ -1,0 +1,104 @@
+#!/usr/bin/env bash
+# factory-cron <scan|retro> -- the unattended half of the factory.
+#
+# launchd starts with almost no environment, so everything this needs is set
+# here rather than inherited. Every run is budget-capped and least-privilege:
+# an agent running while nobody is watching gets an explicit tool allowlist,
+# never bypassPermissions.
+
+set -uo pipefail
+
+FACTORY_HOME="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+export FACTORY_HOME
+export PATH="$HOME/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:$FACTORY_HOME/bin:$PATH"
+
+STATE="$HOME/.factory"
+REPOS="$STATE/repos.txt"
+LOGS="$STATE/logs"
+mkdir -p "$LOGS"
+
+JOB="${1:-}"
+case "$JOB" in
+  scan|retro) ;;
+  *) printf 'usage: factory-cron <scan|retro>\n' >&2; exit 64;;
+esac
+
+STAMP="$(date +%Y%m%d-%H%M%S)"
+LOG="$LOGS/$JOB-$STAMP.log"
+exec > >(tee -a "$LOG") 2>&1
+
+notify() { # a failed unattended job that nobody hears about is a job that is not running
+  osascript -e "display notification \"$2\" with title \"factory $JOB\"" >/dev/null 2>&1 || true
+}
+
+if [ ! -f "$REPOS" ]; then
+  printf 'no %s -- nothing registered. Add one repository path per line.\n' "$REPOS"
+  exit 0
+fi
+
+command -v claude >/dev/null 2>&1 || { printf 'claude not on PATH\n'; notify fail "claude not on PATH"; exit 127; }
+
+# Least privilege: exactly the tools these two jobs need, and nothing that can
+# reach the network beyond gh.
+ALLOWED='Read,Grep,Glob,Write,Edit,TodoWrite,Skill,Bash(factory:*),Bash(gh:*),Bash(git:*),Bash(jq:*),Bash(date:*),Bash(mkdir:*),Bash(cat:*),Bash(ls:*)'
+
+case "$JOB" in
+  scan)
+    PROMPT='/factory:scan'
+    MODEL_KEY='models.scanner'
+    BUDGET_KEY='budget.scanUsd'
+    TURNS=80
+    ;;
+  retro)
+    PROMPT='/factory:retro'
+    MODEL_KEY='models.retro'
+    BUDGET_KEY='budget.retroUsd'
+    TURNS=120
+    ;;
+esac
+
+FAILED=0 RAN=0
+while IFS= read -r repo; do
+  case "$repo" in ''|'#'*) continue;; esac
+  repo="${repo/#\~/$HOME}"
+  [ -d "$repo/.factory" ] || { printf '\n=== skip %s (not a factory project)\n' "$repo"; continue; }
+
+  printf '\n=== %s  %s  %s\n' "$JOB" "$repo" "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+  RAN=$((RAN+1))
+
+  model="$(cd "$repo" && factory config get "$MODEL_KEY" 2>/dev/null)"; [ -n "$model" ] || model=sonnet
+  budget="$(cd "$repo" && factory config get "$BUDGET_KEY" 2>/dev/null)"; [ -n "$budget" ] || budget=2
+
+  # Pull first, so the agent reasons about the current default branch.
+  ( cd "$repo" && git fetch --quiet origin 2>/dev/null && git pull --ff-only --quiet 2>/dev/null ) || \
+    printf '  (could not fast-forward; continuing on the local checkout)\n'
+
+  out="$( cd "$repo" && claude -p "$PROMPT" \
+      --model "$model" \
+      --permission-mode acceptEdits \
+      --permission-prompts none \
+      --allowedTools "$ALLOWED" \
+      --max-budget-usd "$budget" \
+      --max-turns "$TURNS" \
+      --output-format json \
+      --settings '{"crossSessionInbound":"refuse"}' 2>&1 )"
+  rc=$?
+
+  if [ $rc -ne 0 ]; then
+    FAILED=$((FAILED+1))
+    printf '  FAILED (exit %s)\n%s\n' "$rc" "$(printf '%s' "$out" | tail -40)"
+    continue
+  fi
+
+  printf '%s\n' "$out" | jq -r '.result // .' 2>/dev/null || printf '%s\n' "$out"
+  printf '  cost: $%s  turns: %s\n' \
+    "$(printf '%s' "$out" | jq -r '.total_cost_usd // "?"' 2>/dev/null)" \
+    "$(printf '%s' "$out" | jq -r '.num_turns // "?"' 2>/dev/null)"
+done < "$REPOS"
+
+printf '\n=== %s finished: %s repo(s), %s failure(s)\n' "$JOB" "$RAN" "$FAILED"
+[ "$FAILED" -gt 0 ] && notify fail "$FAILED of $RAN repo(s) failed. See $LOG"
+
+# Keep a month of logs, not a lifetime.
+find "$LOGS" -name '*.log' -mtime +30 -delete 2>/dev/null || true
+exit 0

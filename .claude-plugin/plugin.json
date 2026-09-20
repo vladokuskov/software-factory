@@ -1,8 +1,16 @@
 {
-  "name": "software-factory",
+  "name": "factory",
   "version": "0.1.0",
   "description": "An agentic software factory for Claude Code: epic planning on Fable, a team of Opus workers in isolated worktrees, adversarial multi-model review, a concrete escalation ladder, and autonomous daily observability and weekly process-retro agents. Tracker-agnostic through a per-project adapter.",
-  "author": { "name": "unicrew" },
-  "keywords": ["orchestration", "agent-teams", "code-review", "workflow", "automation"],
+  "author": {
+    "name": "unicrew"
+  },
+  "keywords": [
+    "orchestration",
+    "agent-teams",
+    "code-review",
+    "workflow",
+    "automation"
+  ],
   "license": "Apache-2.0"
 }

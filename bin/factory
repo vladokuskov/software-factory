@@ -14,6 +14,10 @@ FACTORY_HOME="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 . "$FACTORY_HOME/lib/glob.sh"
 # shellcheck source=../lib/cycle.sh
 . "$FACTORY_HOME/lib/cycle.sh"
+# shellcheck source=../lib/init.sh
+. "$FACTORY_HOME/lib/init.sh"
+# shellcheck source=../lib/schedule.sh
+. "$FACTORY_HOME/lib/schedule.sh"
 
 usage() {
   cat <<'USAGE'
@@ -25,7 +29,13 @@ factory <command> [args]
   cycle <verb>            append | count | summary | log
   escalate --to lead|human --task ID --reason TEXT [--detail TEXT]
   scope <set|check|show>  declared file scope for an in-flight task
+  current <get|set|clear> which task this working tree is on (branch-derived)
   config <show|get PATH>  resolved config (defaults merged with .factory/config.json)
+  init [--tracker T] [--teams on|off] [--force]
+                          wire this repository up as a factory project
+  link                    re-link hooks inside a git worktree (state stays in the main tree)
+  schedule <verb>         install | uninstall | add <path> | remove <path> | run <job> | status
+                          the unattended daily scan and weekly retro (launchd)
   doctor                  check this project's factory wiring
   version
 
@@ -189,6 +199,36 @@ cmd_scope() {
 }
 
 # --------------------------------------------------------------------------
+# Which task is this working tree working on? Hooks need this and cannot see
+# the agent's environment, so the branch name is the primary source of truth:
+# a worker branches as factory/<task-id>-<slug>.
+cmd_current() {
+  local verb="${1:-get}"; shift || true
+  local dir; dir="$(factory_dir)/current"; mkdir -p "$dir"
+  local key; key="$(printf '%s' "$PWD" | shasum | cut -c1-12)"
+  case "$verb" in
+    set)
+      local task=""
+      while [ $# -gt 0 ]; do case "$1" in --task) task="$2"; shift 2;; *) shift;; esac; done
+      [ -n "$task" ] || die "current set: --task is required"
+      printf '%s' "$task" > "$dir/$key.task"
+      jq -nc --arg t "$task" '{ok:true,task:$t}'
+      ;;
+    clear) rm -f "$dir/$key.task"; json_ok;;
+    get)
+      if [ -n "${FACTORY_TASK:-}" ]; then printf '%s\n' "$FACTORY_TASK"; return; fi
+      local branch; branch="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || true)"
+      case "$branch" in
+        factory/*) printf '%s\n' "$(printf '%s' "${branch#factory/}" | sed -E 's/-.*$//')"; return;;
+      esac
+      [ -f "$dir/$key.task" ] && { cat "$dir/$key.task"; printf '\n'; return; }
+      printf '\n'
+      ;;
+    *) die "current: get|set|clear";;
+  esac
+}
+
+# --------------------------------------------------------------------------
 cmd_config() {
   case "${1:-show}" in
     show) config_json;;
@@ -214,6 +254,9 @@ cmd_doctor() {
     beads)  command -v bd >/dev/null && printf 'bd:              ok\n' || { printf 'bd:              NOT INSTALLED (brew install beads)\n'; ok=1; };;
     jira)   [ -n "${JIRA_BASE_URL:-}" ] && [ -n "${JIRA_API_TOKEN:-}" ] && printf 'jira env:        ok\n' || { printf 'jira env:        JIRA_BASE_URL/JIRA_EMAIL/JIRA_API_TOKEN not set\n'; ok=1; };;
   esac
+  printf 'state dir:       %s%s\n' "$(factory_dir)" "$([ "$(main_root)" != "$root" ] && echo '  (shared from the main worktree)' || true)"
+  if [ -L "$root/.factory/hooks" ] && [ -d "$root/.factory/hooks" ]; then printf 'hooks:           ok\n'
+  else printf 'hooks:           MISSING (run: factory link)\n'; ok=1; fi
   printf 'gates:           %s\n' "$(config_get_raw gates | jq -r 'keys | join(", ") | if . == "" then "(none configured)" else . end')"
   printf 'default branch:  %s\n' "$(config_default_branch)"
   printf 'open tasks:      %s\n' "$(cmd_task list 2>/dev/null | jq 'map(select(.status != "done")) | length' 2>/dev/null || echo '?')"
@@ -227,8 +270,12 @@ case "${1:-}" in
   cycle)    shift; cmd_cycle "$@";;
   escalate) shift; cmd_escalate "$@";;
   scope)    shift; cmd_scope "$@";;
+  current)  shift; cmd_current "$@";;
   config)   shift; cmd_config "$@";;
   doctor)   shift; cmd_doctor "$@";;
+  init)     shift; cmd_init "$@";;
+  link)     shift; cmd_link "$@";;
+  schedule) shift; cmd_schedule "$@";;
   version)  printf 'factory %s\n' "$(cat "$FACTORY_HOME/VERSION" 2>/dev/null || echo dev)";;
   -h|--help|help|"") usage;;
   *) die "unknown command '$1' (try: factory help)";;
