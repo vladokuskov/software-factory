@@ -96,7 +96,14 @@ current_suite() {
   "$F" task link-pr "$t" --pr 77 >/dev/null
   check "link-pr releases the binding" "$("$F" current get | head -1)" ""
   "$F" current set --task "$t" >/dev/null
-  check "stale binding self-expires"   "$("$F" current get | head -1)" ""
+  check "stale binding self-expires"   "$(FACTORY_BINDING_TTL=0 "$F" current get | head -1)" ""
+  # guard-scope reads this on every Edit, so a validated binding must be cached
+  # rather than re-checked against the tracker each time.
+  "$F" task update "$t" --status in_progress >/dev/null
+  "$F" current set --task "$t" >/dev/null
+  "$F" current get >/dev/null
+  check "binding check is cached" \
+    "$(find "$dir/.factory/current" -name '*.checked' 2>/dev/null | wc -l | tr -d ' ')" "1"
   "$F" task update "$t" --status "done" >/dev/null
 }
 

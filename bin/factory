@@ -43,7 +43,8 @@ factory <command> [args]
   doctor                  check this project's factory wiring
   version
 
-Environment overrides: FACTORY_TRACKER, FACTORY_PROJECT_ROOT, FACTORY_AGENT
+Environment overrides: FACTORY_TRACKER, FACTORY_PROJECT_ROOT, FACTORY_AGENT,
+                       FACTORY_BINDING_TTL (seconds between binding staleness checks, default 300)
 USAGE
 }
 
@@ -79,7 +80,7 @@ _release_current() {
   local f
   for f in "$dir"/*.task; do
     [ -f "$f" ] || continue
-    [ "$(cat "$f" 2>/dev/null)" = "$task" ] && rm -f "$f"
+    [ "$(cat "$f" 2>/dev/null)" = "$task" ] && rm -f "$f" "${f%.task}.checked"
   done
   return 0
 }
@@ -238,9 +239,10 @@ cmd_current() {
       while [ $# -gt 0 ]; do case "$1" in --task) task="$2"; shift 2;; *) shift;; esac; done
       [ -n "$task" ] || die "current set: --task is required"
       printf '%s' "$task" > "$dir/$key.task"
+      rm -f "$dir/$key.checked"
       jq -nc --arg t "$task" '{ok:true,task:$t}'
       ;;
-    clear) rm -f "$dir/$key.task"; json_ok;;
+    clear) rm -f "$dir/$key.task" "$dir/$key.checked"; json_ok;;
     get)
       if [ -n "${FACTORY_TASK:-}" ]; then printf '%s\n' "$FACTORY_TASK"; return; fi
       local branch; branch="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || true)"
@@ -249,12 +251,16 @@ cmd_current() {
       esac
       if [ -f "$dir/$key.task" ]; then
         local t; t="$(cat "$dir/$key.task")"
+        local stamp="$dir/$key.checked" ttl="${FACTORY_BINDING_TTL:-300}" now age=99999
+        now="$(date +%s)"
+        [ -f "$stamp" ] && age=$(( now - $(cat "$stamp" 2>/dev/null || echo 0) ))
+        if [ "$age" -lt "$ttl" ]; then printf '%s\n' "$t"; return; fi
         # A binding outlives its usefulness once the task has left the bench.
         # A stale one silently gates every write in this tree against another
         # task's scope, which is maddening to diagnose, so drop it.
         case "$(cmd_task show "$t" 2>/dev/null | jq -r '.status // "unknown"')" in
-          done|review) rm -f "$dir/$key.task";;
-          *) printf '%s\n' "$t"; return;;
+          done|review) rm -f "$dir/$key.task" "$stamp";;
+          *) printf '%s' "$now" > "$stamp"; printf '%s\n' "$t"; return;;
         esac
       fi
       printf '\n'
