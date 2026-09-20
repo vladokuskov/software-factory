@@ -17,8 +17,8 @@ catches them measurably improves week over week.
 
 | | |
 |---|---|
-| **`factory`** | One CLI every agent talks to. Tasks, gates, cycle log, scope, escalation. |
-| **Tracker adapters** | GitHub Issues, a local JSONL file, beads, or Jira, behind one contract. Switching tracker changes no agent prompt. The first three pass the same 24-check suite live; Jira is written but unverified. |
+| **`factory`** | One CLI every agent talks to. Tasks, gates, cycle log, scope, escalation, handoffs. |
+| **Tracker adapters** | GitHub Issues, a local JSONL file, beads, or Jira, behind one contract. Switching tracker changes no agent prompt. The first three pass the same suite live (68 checks); Jira is written but unverified. |
 | **7 agents** | epic lead (fable), worker (opus), three reviewers (opus/sonnet/fable), observability scanner, retro analyst. |
 | **9 skills** | `/factory:init` `epic` `run` `task` `review` `signoff` `scan` `retro` `status` |
 | **6 hooks** | Acceptance criteria enforced at task creation, file scope enforced at write time, gates run on every edit, teammates pushed back from going idle on unfinished work. |
@@ -59,6 +59,26 @@ factory schedule add .          # register this project
 factory schedule install        # daily scan + weekly retro
 factory schedule run scan       # try it now
 ```
+
+## What it caught on its first runs
+
+Not a demo. These came out of real runs on a real repository, recorded in
+`docs/VERIFICATION.md`:
+
+- A **Unicode bug** in a search command: a note stored NFD never matched an NFC
+  query, so search reported no matches for a note plainly visible in `list`.
+- A **test that would have passed with the implementation deleted**: the sort
+  fixture had no tie and insertion order already matched the expected output.
+- A **destructive command silently ignoring extra operands** (`rm n1 n2` removed
+  only `n1`). Two reviewers converged on it; the lead reasoned about the
+  precedent rather than the rule and made it refuse instead.
+- A **worker correctly rejecting a reviewer's confident false critical**, with
+  evidence from the merge base, rather than "fixing" a bug that was not there.
+- **Four bugs in this harness**, three of them found by its own agents: review
+  rounds counted per reviewer instead of per cycle, a `link-pr` that reported
+  success for a write nothing could read back, a `mktemp` call a sandboxed
+  unattended agent was not allowed to make, and a stale task binding that gated
+  every write in an unrelated session.
 
 ## The rules it enforces
 
