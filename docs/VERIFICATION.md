@@ -86,12 +86,47 @@ it and replied confirming it would defer until released. `/list-agents` showed
 both.
 
 **Phase 6 — the unattended jobs.** Both launchd agents installed and loaded
-(`com.unicrew.factory.scan`, `com.unicrew.factory.retro`). The scan was run
-against a repository whose CI was deliberately red. On the first pass the
-failure carried an explicit "deliberate failure" comment, and **the scanner
-refused to file it**, reporting it as a self-labelled fixture rather than a
-production issue. The failure was then replaced with a genuine regression and
-the scan re-run.
+(`com.unicrew.factory.scan`, `com.unicrew.factory.retro`). The scan was run four
+times against progressively more realistic failures, and its judgement was right
+every time:
+
+1. A CI failure whose test carried a `// Deliberate failure` comment. **Refused
+   to file it**: "filing it would just be the scanner congratulating itself."
+2. A genuine regression on an open PR branch. **Refused to file it**, on the
+   grounds that the PR's own review loop already surfaces it, and left a note
+   for whoever was driving that PR.
+3. The same regression on the **default branch**, which is its stated trigger.
+   It diagnosed the root cause exactly (`t.trim()` where `t.slice(1)` was meant,
+   so stored tags kept their `#` while the query side still stripped it),
+   separated it from the existing open task #23, and then **could not file it**.
+4. After the two harness bugs below were fixed, it filed
+   [#29](https://github.com/vladokuskov/factory-scratch/issues/29) with
+   `priority:high`, the root cause, a reproduction and acceptance criteria,
+   skipped the fixture, and added an unprompted process observation: the
+   offending commit had landed on `main` by direct push, with no task, PR or
+   review, which is how the regression reached trunk unnoticed.
+
+Run 3 is the most valuable result in this whole exercise, because an unattended
+agent found two real defects in the harness it runs on:
+
+- **`factory task create` shelled out to the system `mktemp`.** A sandboxed
+  unattended agent may not write outside the working directory, so `mktemp`
+  failed with no output and took the command down with it. The agent tried
+  `TMPDIR` overrides, a wrapper script and `chmod` before reporting it
+  accurately rather than giving up or inventing a workaround. Scratch files now
+  live in `.factory/tmp/`.
+- **A `factory current` binding outlived its task.** One left behind in the main
+  worktree was gating every file write in an unrelated session against task #2's
+  scope. Bindings now release on `link-pr` and on a terminal status, and a stale
+  one self-expires on read; `factory doctor` reports what a tree is bound to.
+
+Both are covered by conformance checks. `main` was reverted afterwards and #29
+closed.
+
+**The eval suite.** Reworked once it became clear it was measuring the wrong
+thing: a free-text prompt does not load a skill, so the cases were scoring the
+base model's priors and attributing them to the plugin. Cases now invoke the
+skills. See `evals/README.md` for what the suite can and cannot tell you.
 
 ## Not verified
 
@@ -102,7 +137,9 @@ the scan re-run.
   `systemMessage` and exit 2 so either documented behaviour lands, but which one
   is real is still an open question.
 - **`/factory:retro`.** Needs a week of cycle-log data to be a meaningful test.
-  The data it reads is being produced now.
+  There is now real data to read: three tasks, five rounds, one escalation, and
+  one task whose recorded round count is an artifact of the bug that was fixed
+  mid-run. A competent retro should notice that last part.
 - **The `jira` adapter.** Written against the documented API, never run against a
   live instance.
 - **`claude ultrareview`.** Currently returns `Ultrareview is currently
