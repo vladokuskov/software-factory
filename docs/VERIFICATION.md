@@ -52,10 +52,33 @@ It also found two real bugs in this harness, which is the loop working:
 Both fixed, both now covered by conformance checks.
 
 **Phase 4 — the parallel wave.** Two tasks (`#3`, `#4`) with disjoint file scopes
-dispatched together, each in its own worktree, both reaching green CI and an open
-PR (#15, #16) with no conflicts. `src/registry.ts` was held back as a shared
-resource and neither worker touched it. The round-counting fix was confirmed in
-the field: all three reviewers for task #3 logged as round 1.
+dispatched together by a `fable` lead, each in its own worktree, both reaching
+green CI and an open PR (#15, #16) with no conflicts. `src/registry.ts` was held
+back as a shared resource and neither worker touched it; the lead reserved the
+registry edit for itself, after the wave merges. $11.38, about two hours.
+
+The round-counting fix held in the field: all three reviewers logged as round 1
+on both PRs, and the lead reported "round count is now 1, within the budget of
+2" rather than escalating.
+
+What the reviewers actually caught, on work that already had green gates:
+
+- `rm n1 n2` silently removed only `n1`. Two reviewers converged on it, so the
+  lead took the higher severity and reasoned about the precedent rather than the
+  rule: ignoring extra operands is harmless on a read-only command and a footgun
+  on a destructive one. It now refuses.
+- A sort test with no discriminating coverage: deleting the sort entirely, or
+  reversing the tie-break, still passed all six tests, because the fixture had no
+  tie and insertion order already matched the expected output.
+- `notes add x #` stored an empty tag, so `tags` printed `  1` instead of
+  `no tags`. The root cause was in `add.ts`, outside the task's scope, so it was
+  filed as #23 rather than fixed in place.
+- A deferred finding was pointed at existing task #10 instead of filing a
+  duplicate.
+
+`ultrareview` was unavailable throughout and **no cycle-log entry was written for
+it**, which is the instruction working: a fabricated round would corrupt the only
+dataset the factory has about itself.
 
 **Phase 5 — lead-to-lead coordination.** Two independent sessions on one machine.
 Lead A announced a lock on `src/registry.ts` over `SendMessage`; lead B received
