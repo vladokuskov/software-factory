@@ -18,7 +18,7 @@ catches them measurably improves week over week.
 | | |
 |---|---|
 | **`factory`** | One CLI every agent talks to. Tasks, gates, cycle log, scope, escalation. |
-| **Tracker adapters** | GitHub Issues, a local JSONL file, or beads, behind one contract. All three pass the same 24-check suite. Switching tracker changes no agent prompt. |
+| **Tracker adapters** | GitHub Issues, a local JSONL file, beads, or Jira, behind one contract. Switching tracker changes no agent prompt. The first three pass the same 24-check suite live; Jira is written but unverified. |
 | **7 agents** | epic lead (fable), worker (opus), three reviewers (opus/sonnet/fable), observability scanner, retro analyst. |
 | **9 skills** | `/factory:init` `epic` `run` `task` `review` `signoff` `scan` `retro` `status` |
 | **6 hooks** | Acceptance criteria enforced at task creation, file scope enforced at write time, gates run on every edit, teammates pushed back from going idle on unfinished work. |

@@ -57,7 +57,8 @@ Claiming is what stops two agents doing the same task. The guarantees differ:
   their own marker. This is eventually consistent rather than atomic: every claimant
   converges on the same winner, but a loser may briefly believe it holds the task.
   Verified with 5 concurrent claimants yielding exactly one winner and one surviving marker.
-- **`jira`** — optimistic, via assignee plus a status transition. Weakest of the four.
+- **`jira`** — the same earliest-comment-wins protocol as `github`, since Jira has
+  no compare-and-set either. **Not yet verified against a live instance.**
 
 ## Mapping per adapter
 
@@ -109,10 +110,41 @@ the adapter uses `in_progress` plus a `factory:review` label; and beads sends
 anonymous command-usage metrics by default, which `bd metrics off` disables.
 
 ### `jira`
-Jira Cloud REST over `curl`, configured with `JIRA_BASE_URL`, `JIRA_EMAIL`, `JIRA_API_TOKEN`
-and `trackerOptions.jiraProject`. A shell adapter is used rather than the Atlassian MCP
-because MCP tools only exist inside a Claude session, and hooks, launchd jobs and
-`tests/conformance.sh` all need to reach the tracker without one.
+
+> **Unverified.** Written against the documented Jira Cloud API but not yet run
+> against a live instance. Prove it before trusting it:
+>
+>     FACTORY_CONFORMANCE_REPO=$PWD FACTORY_TRACKER=jira tests/conformance.sh
+
+Configure in the environment:
+
+    JIRA_BASE_URL    https://your-site.atlassian.net
+    JIRA_EMAIL       the account the API token belongs to
+    JIRA_API_TOKEN   from id.atlassian.com/manage-profile/security/api-tokens
+
+and `trackerOptions.jiraProject` in `.factory/config.json`.
+
+| concept | representation |
+|---|---|
+| epic / task | issue types Epic and Task, linked by `parent` |
+| dependencies | `Depends-on: KEY-1, KEY-2` line in the description |
+| file scope | `Scope: src/**, lib/**` line in the description |
+| status | status **category**: `new` = pending, `indeterminate` = in progress, `done`; review is in-progress plus a `factory-review` label |
+| claim | `factory-agent-<name>` label plus a claim-marker comment |
+| PR | `PR: #N` line in the description |
+
+Three deliberate choices:
+
+- **REST v2 for issues**, so descriptions stay plain text. v3 would require
+  Atlassian Document Format for every body, which buys nothing here. Search
+  tries v2 and falls back to the v3 `/search/jql` replacement.
+- **Status categories, not status names.** Every Jira project renames its
+  statuses; the category (`new` / `indeterminate` / `done`) is stable, and
+  transitions are resolved by querying the issue's available transitions rather
+  than hardcoding ids.
+- **A shell adapter rather than the Atlassian MCP connector**, because MCP tools
+  only exist inside a Claude session and the hooks, the launchd jobs and the
+  conformance suite all need to reach the tracker without one.
 
 ## Adding an adapter
 
