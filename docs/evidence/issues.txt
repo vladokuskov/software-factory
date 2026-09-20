@@ -1,0 +1,36 @@
+#41 [CLOSED] Urgent conformance task
+#40 [CLOSED] Conformance task
+#39 [CLOSED] Conformance epic
+#38 [CLOSED] Urgent conformance task
+#37 [CLOSED] Conformance task
+#36 [CLOSED] Conformance epic
+#35 [CLOSED] Urgent conformance task
+#34 [CLOSED] Conformance task
+#33 [CLOSED] Conformance epic
+#32 [CLOSED] Urgent conformance task
+#31 [CLOSED] Conformance task
+#30 [CLOSED] Conformance epic
+#29 [CLOSED] add.ts stores tags with leading '#', breaking list/search by tag (main CI red)
+#28 [CLOSED] Urgent conformance task
+#27 [CLOSED] Conformance task
+#26 [CLOSED] Conformance epic
+#25 [CLOSED] scan-probe: delete me
+#23 [OPEN] Reject empty tags and dedupe tags at the add boundary
+#22 [OPEN] Derive the command registry from src/commands/ instead of hand-maintaining it
+#21 [CLOSED] Extract note line formatting into src/lib/format.ts
+#19 [CLOSED] Urgent conformance task
+#18 [CLOSED] Conformance task
+#17 [CLOSED] Conformance epic
+#14 [CLOSED] Conformance task
+#13 [CLOSED] Conformance epic
+#12 [OPEN] notes dispatch resolves Object.prototype keys; notes __proto__ crashes
+#11 [CLOSED] factory task link-pr reports ok but the PR link does not persist
+#10 [OPEN] Extract a shared note formatter for list and search
+#8 [CLOSED] Conformance task
+#7 [CLOSED] Conformance epic
+#6 [CLOSED] Conformance task
+#5 [CLOSED] Conformance epic
+#4 [OPEN] Add a tags command
+#3 [OPEN] Add an rm command
+#2 [OPEN] Add a search command
+#1 [OPEN] Expand the notes command surface

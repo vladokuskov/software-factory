@@ -1,0 +1,3 @@
+{"event":"review","round":1,"reviewer":"review-adversarial","model":"opus","findings":{"critical":0,"important":0,"minor":3},"outcome":"changes_requested","tokens":31101,"resolved":0,"pr":15,"ts":"2026-09-20T16:46:13Z","task":"3","agent":"unknown"}
+{"event":"review","round":1,"reviewer":"review-quality","model":"sonnet","findings":{"critical":0,"important":0,"minor":0},"outcome":"approved","tokens":17655,"resolved":0,"pr":15,"ts":"2026-09-20T16:46:13Z","task":"3","agent":"unknown"}
+{"event":"review","round":1,"reviewer":"review-intent","model":"fable","findings":{"critical":0,"important":1,"minor":0},"outcome":"changes_requested","tokens":28688,"resolved":0,"pr":15,"ts":"2026-09-20T16:46:13Z","task":"3","agent":"unknown"}

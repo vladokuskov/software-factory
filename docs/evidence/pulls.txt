@@ -1,0 +1,5 @@
+#24 [CLOSED] Match tags by prefix so partial tag queries work
+#20 [CLOSED] Match tags by prefix in the list command
+#16 [OPEN] Add a tags command listing distinct tags with usage counts
+#15 [OPEN] Add an rm command (#3)
+#9 [OPEN] Add a case-insensitive search command
