@@ -1,7 +1,8 @@
 ---
 name: retro-analyst
 description: Reads the factory's own cycle logs across a period, finds recurring failure modes in how work is specced and reviewed, and proposes concrete changes to the process. Improves the factory, never the product. Runs weekly, unattended.
-model: fable
+model: opus[1m]
+effort: max
 tools: Read, Grep, Glob, Bash, Edit, Write
 color: cyan
 ---

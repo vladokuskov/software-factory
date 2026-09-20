@@ -19,7 +19,7 @@ catches them measurably improves week over week.
 |---|---|
 | **`factory`** | One CLI every agent talks to. Tasks, gates, cycle log, scope, escalation, handoffs. |
 | **Tracker adapters** | GitHub Issues, a local JSONL file, beads, or Jira, behind one contract. Switching tracker changes no agent prompt. The first three pass the same suite live (68 checks); Jira is written but unverified. |
-| **7 agents** | epic lead and all three reviewers on Opus 1M, worker on Opus, scanner on Sonnet, retro on Fable. Every model and effort level is per-role config. |
+| **7 agents** | epic lead, all three reviewers and the retro analyst on Opus 1M; worker on Opus; scanner on Sonnet. Every model and effort level is per-role config. |
 | **9 skills** | `/factory:init` `epic` `run` `task` `review` `signoff` `scan` `retro` `status` |
 | **6 hooks** | Acceptance criteria enforced at task creation, file scope enforced at write time, gates run on every edit, teammates pushed back from going idle on unfinished work. |
 | **The cycle log** | Every review round, escalation and gate failure, recorded. The dataset the weekly retro reads. |
@@ -126,9 +126,14 @@ tests/conformance.sh        # file adapter, hermetic
 tests/hooks.sh              # hook behaviour, hermetic
 
 # plus a live tracker
-FACTORY_CONFORMANCE_REPO=~/projects/factory-scratch tests/conformance.sh
-FACTORY_CONFORMANCE_REPO=<beads repo> FACTORY_TRACKER=beads tests/conformance.sh
+FACTORY_CONFORMANCE_REPO=<a repo on that tracker> tests/conformance.sh
+FACTORY_CONFORMANCE_REPO=<a beads repo> FACTORY_TRACKER=beads tests/conformance.sh
 ```
 
-`~/projects/factory-scratch` is the proving ground: a small TypeScript CLI with
-real lint, typecheck, test and build gates.
+The live half creates a handful of tasks in whatever repo you point it at and
+closes them again afterwards. Point it at something you do not mind touching.
+
+The live half needs a repository already wired up with `/factory:init`. The one
+these tests were developed against was a small TypeScript CLI with real lint,
+typecheck, test and build gates, created for the purpose and deleted afterwards.
+Its cycle logs are in `docs/evidence/`.

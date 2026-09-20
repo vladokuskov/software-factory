@@ -4,8 +4,10 @@ Written 2026-09-20. This records what was run, not what should work. Anything
 not listed here has not been tested; anything listed as unverified is listed
 that way on purpose.
 
-Proving ground: `~/projects/factory-scratch`, a small TypeScript CLI with real
-lint, typecheck, test and build gates, tracked in GitHub Issues.
+Proving ground: a small TypeScript CLI with real lint, typecheck, test and build
+gates, tracked in GitHub Issues. It was created for this exercise and deleted
+once the harness was verified, so the artifacts it produced are preserved in
+`docs/evidence/` rather than in a repository that exists to be thrown away.
 
 ## Automated suites
 
@@ -100,8 +102,7 @@ every time:
    so stored tags kept their `#` while the query side still stripped it),
    separated it from the existing open task #23, and then **could not file it**.
 4. After the two harness bugs below were fixed, it filed
-   [#29](https://github.com/vladokuskov/factory-scratch/issues/29) with
-   `priority:high`, the root cause, a reproduction and acceptance criteria,
+   task #29 with `priority:high`, the root cause, a reproduction and acceptance criteria,
    skipped the fixture, and added an unprompted process observation: the
    offending commit had landed on `main` by direct push, with no task, PR or
    review, which is how the regression reached trunk unnoticed.

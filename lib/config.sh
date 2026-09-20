@@ -20,7 +20,7 @@ FACTORY_DEFAULTS='{
     "reviewQuality": "opus[1m]",
     "reviewIntent": "opus[1m]",
     "scanner": "sonnet",
-    "retro": "fable"
+    "retro": "opus[1m]"
   },
   "effort": {
     "lead": "max",
@@ -29,7 +29,7 @@ FACTORY_DEFAULTS='{
     "reviewQuality": "high",
     "reviewIntent": "max",
     "scanner": "medium",
-    "retro": "high"
+    "retro": "max"
   },
   "escalation": {
     "maxReviewCycles": 2,
