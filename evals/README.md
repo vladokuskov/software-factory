@@ -5,7 +5,12 @@ instead of widening scope, criteria that are checkable without the diff, review
 findings that come with a concrete failure scenario, claiming before working, and
 never merging.
 
-    claude plugin eval . --runs 3 --trust-plugin
+    claude plugin eval . --runs 3 --trust-plugin --judge-model sonnet
+
+**Use `--judge-model sonnet`.** The default judge is haiku, and it misgraded
+these rubrics: it voted unanimously to fail a response that satisfied every
+listed check, three runs in a row. Sonnet grades the same responses correctly.
+Rubrics here are written as numbered yes/no checks for the same reason.
 
 ## What these can and cannot tell you
 
@@ -20,8 +25,9 @@ So read a failure as "a fresh session would not know this from the plugin alone"
 not as "the worker agent gets this wrong". The agents are verified by the real
 runs recorded in `docs/VERIFICATION.md` instead.
 
-The first full run scored 2/5, and the failures were useful: in a bare sandbox
-the model read the task before claiming it, and put its worktree outside the
-repository, which is the placement that breaks the gates. Both are now called out
-explicitly in `skills/task/SKILL.md` and `docs/FACTORY.md` rather than only in
-the agent prompt.
+The first full run scored 2/5, and the failures were useful. Two were real:
+in a bare sandbox the model read the task before claiming it and put its worktree
+outside the repository, which is the placement that breaks the gates. Both are
+now called out in `skills/task/SKILL.md` and `docs/FACTORY.md` rather than only
+in the agent prompt. The rest were the suite's own fault: cases written as free
+text, and a judge too weak for the rubrics.
