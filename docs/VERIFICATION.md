@@ -137,7 +137,8 @@ it burns quota:
 |---|---|
 | Phase 3, one task end to end (opus worker, 3 reviewers) | $4.19 |
 | Phase 4, two tasks in parallel with a fable lead | $11.38 |
-| 5 unattended scan and retro runs | $2.62 |
+| 5 unattended scan runs | $2.62 |
+| The weekly retro, against real data | $4.53 |
 | The eval suite, across several tuning iterations | $11.24 |
 
 So roughly **$4 for one task** through the full loop with three reviewers, and
@@ -153,10 +154,29 @@ $0.15 to $1.35 range per repository per run, and capped by `--max-budget-usd`.
   guardrail — needs an interactive `/factory:run`. The hook emits both a
   `systemMessage` and exit 2 so either documented behaviour lands, but which one
   is real is still an open question.
-- **`/factory:retro`.** Needs a week of cycle-log data to be a meaningful test.
-  There is now real data to read: three tasks, five rounds, one escalation, and
-  one task whose recorded round count is an artifact of the bug that was fixed
-  mid-run. A competent retro should notice that last part.
+**Phase 6b — the weekly retro.** Run against the real cycle log from phases 3 and
+4. $4.53, 103 turns. It produced a branch with three changes and a write-up, each
+tied to a pattern it found across all three PRs, and it got the hard part right:
+
+- **Its first read of `cycle summary` returned zero.** Instead of reporting a
+  quiet week, it noticed the directory was missing rather than empty, went to git
+  history, recovered the data, and then made that failure mode impossible to
+  repeat: `cycle summary` now warns when its directory is gone, and `cycles/`
+  joins the machine-local state that a product-side revert cannot take with it.
+- It identified the round-count of 3 on task #2 as an artifact of the
+  per-reviewer bug fixed mid-run, not a real over-budget loop.
+- Two patterns across all three PRs: criteria that pinned output strings but not
+  empty, surplus or malformed input; and **three tests that passed with the
+  behaviour removed**, all three caught by the adversarial reviewer and none by
+  a gate. It changed the task template and the worker prompt accordingly.
+- It listed five things it saw and deliberately did not change, and reported
+  which of its own commands were blocked in the sandbox rather than working
+  around them.
+
+It also hit a stale base: its branch was cut before four commits landed, so its
+first diff silently reverted them. Rebased, reviewed and merged. That is the
+same stale-base failure the wave rule exists to prevent, arriving from the one
+direction the wave rule does not cover.
 - **The `jira` adapter.** Written against the documented API, never run against a
   live instance.
 - **`claude ultrareview`.** Currently returns `Ultrareview is currently
