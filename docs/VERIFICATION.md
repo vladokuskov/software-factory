@@ -128,6 +128,23 @@ thing: a free-text prompt does not load a skill, so the cases were scoring the
 base model's priors and attributing them to the plugin. Cases now invoke the
 skills. See `evals/README.md` for what the suite can and cannot tell you.
 
+## What the verification cost
+
+Useful for budgeting, since the honest objection to this whole approach is that
+it burns quota:
+
+| run | cost |
+|---|---|
+| Phase 3, one task end to end (opus worker, 3 reviewers) | $4.19 |
+| Phase 4, two tasks in parallel with a fable lead | $11.38 |
+| 5 unattended scan and retro runs | $2.62 |
+| The eval suite, across several tuning iterations | $11.24 |
+
+So roughly **$4 for one task** through the full loop with three reviewers, and
+**$6 per task** when a lead is coordinating a wave. That is the number to hold
+against whatever the task was worth. The unattended jobs are cheap, in the
+$0.15 to $1.35 range per repository per run, and capped by `--max-budget-usd`.
+
 ## Not verified
 
 - **`TeammateIdle` blocking.** Agent teams do not form under `claude -p`, so a
