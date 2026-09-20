@@ -39,7 +39,13 @@ resources. Do not reopen the former; do not touch the latter.
 Work in a worktree. This repository's `CLAUDE.md` authorises it, and parallel
 work depends on it.
 
-Enter a worktree named `factory/<id>-<short-slug>`, then immediately, inside it:
+Enter a worktree named `factory/<id>-<short-slug>`. Let `EnterWorktree` place it
+under `.claude/worktrees/`, inside the repo: toolchains resolve upwards, so a
+worktree inside the repo runs the gates against the dependencies already
+installed at the root, and one outside it fails the first gate with a confusing
+"command not found".
+
+Then immediately, inside it:
 
 ```bash
 factory link                 # a fresh worktree has no hooks; without this the guardrails do not run

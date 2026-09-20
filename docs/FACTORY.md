@@ -196,6 +196,21 @@ first real run of this factory.
     factory cycle log --task <id>       the raw record
     factory cycle summary --since <ts>  everything, aggregated
 
+## Where worktrees live, and why it matters
+
+Worktrees go **inside the repository**, under `.claude/worktrees/`, which is
+where `EnterWorktree` puts them. That is not cosmetic.
+
+npm puts every ancestor directory's `node_modules/.bin` on PATH, so a worktree
+inside the repo can run `npm test` using the dependencies already installed at
+the repo root. A worktree created outside it (`git worktree add ../foo`) cannot:
+the first gate fails with `vitest: command not found`, and the worker either
+wastes a full `npm install` or, worse, concludes the project is broken.
+
+The same holds for any toolchain that resolves upwards: `node_modules`, a Python
+virtualenv at the root, a vendored toolchain. If you must place a worktree
+elsewhere, install dependencies there first and say so in the task.
+
 ## Avoiding merge conflicts
 
 The most-reported failure mode of parallel agents is worktrees branched from a

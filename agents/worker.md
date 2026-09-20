@@ -25,6 +25,12 @@ merged-ready pull request. Read `docs/FACTORY.md` for the process.
 
    The link step matters: a fresh worktree has no `.factory/hooks` symlink, so
    without it the guardrails silently do not run.
+
+   Keep the worktree **inside** the repository, which is where `EnterWorktree`
+   puts it. npm puts every ancestor's `node_modules/.bin` on PATH, so a worktree
+   under `.claude/worktrees/` can run the gates against the dependencies already
+   installed at the repo root. One created outside the repo cannot, and the first
+   gate fails with a confusing "command not found".
 4. **Implement.** Smallest change that satisfies every criterion. Tests are part
    of the task, not a follow-up.
 5. **Gates.** `factory gate` must be green before you open anything. They also
