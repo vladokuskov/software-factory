@@ -42,6 +42,7 @@ command -v claude >/dev/null 2>&1 || { printf 'claude not on PATH\n'; notify fai
 # reach the network beyond gh.
 ALLOWED='Read,Grep,Glob,Write,Edit,TodoWrite,Skill,Bash(factory:*),Bash(gh:*),Bash(git:*),Bash(jq:*),Bash(date:*),Bash(mkdir:*),Bash(cat:*),Bash(ls:*)'
 
+EXTRA_DIRS=()
 case "$JOB" in
   scan)
     PROMPT='/factory:scan'
@@ -54,8 +55,10 @@ case "$JOB" in
     MODEL_KEY='models.retro'
     BUDGET_KEY='budget.retroUsd'
     TURNS=120
+    EXTRA_DIRS=("--add-dir" "$FACTORY_HOME")
     ;;
 esac
+
 
 FAILED=0 RAN=0
 while IFS= read -r repo; do
@@ -75,6 +78,7 @@ while IFS= read -r repo; do
 
   out="$( cd "$repo" && claude -p "$PROMPT" \
       --model "$model" \
+      ${EXTRA_DIRS[@]+"${EXTRA_DIRS[@]}"} \
       --permission-mode acceptEdits \
       --permission-prompts none \
       --allowedTools "$ALLOWED" \
