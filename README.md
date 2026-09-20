@@ -46,11 +46,15 @@ rules into `CLAUDE.md`. Re-runnable.
 ## Use
 
 ```
-/factory:epic  Add search, tagging and deletion to the CLI    # plan it (interactive, fable)
-/factory:run   <epic-id>                                      # dispatch a wave of workers
-/factory:task  <task-id>                                      # or just do one task yourself
-/factory:status                                               # what is in flight
+/factory:status                          what is ready, in flight, or waiting on you
+/factory:task    <task-id>               one task to a reviewed PR     (~$4)
+/factory:epic    <a goal, in prose>      plan an epic, interactive     (fable)
+/factory:run     <epic-id>               dispatch a wave of workers    (~$6/task)
+/factory:signoff <pr>                    the lead's final pass before you merge
 ```
+
+**`docs/USAGE.md` is the walkthrough**, in the order you actually do things.
+Start with `/factory:task` on a single task before running a whole epic.
 
 For the unattended half:
 
