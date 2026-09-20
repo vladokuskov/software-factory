@@ -55,7 +55,9 @@ Specific things worth naming:
 
 ## What to produce
 
-A branch and a pull request against the harness repository, containing:
+A branch on the harness repository, and a pull request if it has a remote. If it
+has no remote, leave the branch and report its name plus the command to review
+it. Either way the branch contains:
 
 1. `docs/retros/<YYYY-MM-DD>.md` — what you saw, with the numbers, and what you
    concluded. Cite specific tasks and rounds; an unsourced claim is not useful.

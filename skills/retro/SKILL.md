@@ -49,7 +49,19 @@ the same reason is a finding. Specifically worth checking:
 
 ## 3. Change something
 
-Open a branch on the **harness** repository and a PR containing:
+Work on the **harness** repository (`factory config get factoryHome`), not the
+product repo. Create a branch there and put your changes on it.
+
+If the harness repo has a remote, open a PR. If it does not, commit to the
+branch and say so plainly in your report, with the branch name and the command
+to review it:
+
+```bash
+git -C <harness> log --oneline main..<branch>
+git -C <harness> diff main..<branch>
+```
+
+Either way the branch contains:
 
 1. `docs/retros/<YYYY-MM-DD>.md` — what you saw with the numbers, and what you
    concluded, citing specific tasks and rounds. An unsourced claim is not useful.
@@ -61,7 +73,8 @@ Open a branch on the **harness** repository and a PR containing:
 
 ## 4. Restraint
 
-- **Propose, never merge.** Open the PR and stop.
+- **Propose, never merge.** Open the PR, or leave the branch, and stop. Never
+  commit a process change to the harness's default branch.
 - **At most three changes.** A process that changes in ten places at once cannot
   be evaluated, and you are the one who has to evaluate it next week.
 - **If the data does not support a change, propose none.** "Nothing systematic
