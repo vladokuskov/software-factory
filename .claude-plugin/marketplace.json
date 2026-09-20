@@ -1,0 +1,11 @@
+{
+  "name": "software-factory",
+  "owner": { "name": "unicrew" },
+  "plugins": [
+    {
+      "name": "software-factory",
+      "source": "./",
+      "description": "Agentic software factory harness for Claude Code."
+    }
+  ]
+}

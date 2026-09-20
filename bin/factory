@@ -1,0 +1,235 @@
+#!/usr/bin/env bash
+# factory - the one CLI every factory agent talks to.
+# Agents never call gh/bd/jira directly; they call `factory task ...` and the
+# configured adapter decides how that maps onto a real tracker.
+
+set -euo pipefail
+
+FACTORY_HOME="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+# shellcheck source=../lib/common.sh
+. "$FACTORY_HOME/lib/common.sh"
+# shellcheck source=../lib/config.sh
+. "$FACTORY_HOME/lib/config.sh"
+# shellcheck source=../lib/glob.sh
+. "$FACTORY_HOME/lib/glob.sh"
+# shellcheck source=../lib/cycle.sh
+. "$FACTORY_HOME/lib/cycle.sh"
+
+usage() {
+  cat <<'USAGE'
+factory <command> [args]
+
+  task <verb> [args]      ready | show | create | claim | release | update | comment | link-pr | list
+  gate [--quick] [--task ID] [--json]
+                          run the project's gates; counts retries per task
+  cycle <verb>            append | count | summary | log
+  escalate --to lead|human --task ID --reason TEXT [--detail TEXT]
+  scope <set|check|show>  declared file scope for an in-flight task
+  config <show|get PATH>  resolved config (defaults merged with .factory/config.json)
+  doctor                  check this project's factory wiring
+  version
+
+Environment overrides: FACTORY_TRACKER, FACTORY_PROJECT_ROOT, FACTORY_AGENT
+USAGE
+}
+
+# --------------------------------------------------------------------------
+cmd_task() {
+  local verb="${1:-}"; shift || true
+  [ -n "$verb" ] || die "task: verb required (ready|show|create|claim|release|update|comment|link-pr|list)"
+  local tracker adapter
+  tracker="$(config_tracker)"
+  adapter="$FACTORY_HOME/lib/adapters/$tracker.sh"
+  [ -f "$adapter" ] || die "unknown tracker '$tracker' (no adapter at $adapter)"
+  # shellcheck disable=SC1090
+  . "$adapter"
+  local fn="adapter_$(printf '%s' "$verb" | tr '-' '_')"
+  command -v "$fn" >/dev/null 2>&1 || die "tracker '$tracker' does not implement '$verb'"
+  "$fn" "$@"
+}
+
+# --------------------------------------------------------------------------
+cmd_gate() {
+  local quick=0 task="" as_json=0
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --quick) quick=1; shift;;
+      --task) task="$2"; shift 2;;
+      --json) as_json=1; shift;;
+      *) die "gate: unknown arg $1";;
+    esac
+  done
+  local root; root="$(project_root)"
+  cd "$root"
+
+  local order names results=() failed=0
+  order="$(config_get_raw gateOrder | jq -r '.[]')"
+  [ "$quick" -eq 1 ] && order="$(printf '%s\n' "$order" | grep -E '^(format|lint|typecheck)$' || true)"
+
+  for name in $order; do
+    local cmd; cmd="$(config_get "gates.\"$name\"")"
+    [ -n "$cmd" ] || continue
+    local out rc=0
+    out="$(eval "$cmd" 2>&1)" || rc=$?
+    if [ "$rc" -eq 0 ]; then
+      results+=("$(jq -nc --arg n "$name" '{gate:$n,ok:true}')")
+      [ "$as_json" -eq 1 ] || printf '  ok    %s\n' "$name"
+    else
+      failed=1
+      results+=("$(jq -nc --arg n "$name" --arg o "$(printf '%s' "$out" | tail -60)" '{gate:$n,ok:false,output:$o}')")
+      if [ "$as_json" -eq 0 ]; then
+        printf '  FAIL  %s\n' "$name"
+        printf '%s\n' "$out" | tail -60 | sed 's/^/        /'
+      fi
+    fi
+  done
+
+  if [ -n "$task" ]; then
+    local cf; cf="$(factory_dir)/gate-retries/$task"
+    mkdir -p "$(dirname "$cf")"
+    if [ "$failed" -eq 1 ]; then
+      local n; n=$(( $(cat "$cf" 2>/dev/null || echo 0) + 1 ))
+      printf '%s' "$n" > "$cf"
+      local max; max="$(config_get escalation.maxGateRetries)"
+      if [ "$n" -ge "$max" ]; then
+        cycle_append "$task" "$(jq -nc --arg n "$n" '{event:"gate_retry_limit",retries:($n|tonumber)}')"
+        [ "$as_json" -eq 0 ] && printf '\n  gates have failed %s times for %s (limit %s). Escalate to the lead.\n' "$n" "$task" "$max" >&2
+      fi
+    else
+      rm -f "$cf"
+    fi
+  fi
+
+  if [ "$as_json" -eq 1 ]; then
+    printf '%s\n' "${results[@]:-}" | jq -s --argjson f "$failed" '{ok:($f==0),gates:.}'
+  fi
+  return "$failed"
+}
+
+# --------------------------------------------------------------------------
+cmd_cycle() {
+  local verb="${1:-}"; shift || true
+  case "$verb" in
+    append)  cycle_cmd_append "$@";;
+    count)   cycle_cmd_count "$@";;
+    summary) cycle_cmd_summary "$@";;
+    log)     cycle_cmd_log "$@";;
+    *) die "cycle: verb required (append|count|summary|log)";;
+  esac
+}
+
+# --------------------------------------------------------------------------
+cmd_escalate() {
+  local to="" task="" reason="" detail=""
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --to) to="$2"; shift 2;;
+      --task) task="$2"; shift 2;;
+      --reason) reason="$2"; shift 2;;
+      --detail) detail="$2"; shift 2;;
+      *) die "escalate: unknown arg $1";;
+    esac
+  done
+  [ -n "$to" ] || die "escalate: --to lead|human is required"
+  [ -n "$task" ] || die "escalate: --task is required"
+  [ -n "$reason" ] || die "escalate: --reason is required"
+  cycle_append "$task" "$(jq -nc --arg to "$to" --arg r "$reason" --arg d "$detail" \
+    --arg a "${FACTORY_AGENT:-unknown}" \
+    '{event:"escalation",to:$to,reason:$r,detail:$d,agent:$a}')"
+  jq -nc --arg to "$to" --arg t "$task" --arg r "$reason" '{ok:true,escalated_to:$to,task:$t,reason:$r}'
+}
+
+# --------------------------------------------------------------------------
+cmd_scope() {
+  local verb="${1:-}"; shift || true
+  local task="" paths="" path=""
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --task) task="$2"; shift 2;;
+      --paths) paths="$2"; shift 2;;
+      --path) path="$2"; shift 2;;
+      *) die "scope: unknown arg $1";;
+    esac
+  done
+  local dir; dir="$(factory_dir)/scope"; mkdir -p "$dir"
+  case "$verb" in
+    set)
+      [ -n "$task" ] || die "scope set: --task is required"
+      printf '%s' "$paths" | jq -R 'split(",") | map(select(length>0)) | {scope:.}' > "$dir/$task.json"
+      cat "$dir/$task.json"
+      ;;
+    show)
+      [ -n "$task" ] || die "scope show: --task is required"
+      cat "$dir/$task.json" 2>/dev/null || printf '{"scope":[]}\n'
+      ;;
+    check)
+      [ -n "$path" ] || die "scope check: --path is required"
+      local rel; rel="$(path_relative_to_root "$path")"
+      # Sensitive paths always require escalation, scope or no scope.
+      local p
+      for p in $(config_get_raw sensitivePaths | jq -r '.[]'); do
+        if glob_match "$p" "$rel"; then
+          jq -nc --arg p "$rel" --arg g "$p" '{ok:false,reason:"sensitive",path:$p,pattern:$g}'
+          return 1
+        fi
+      done
+      if [ -z "$task" ] || [ ! -f "$dir/$task.json" ]; then
+        jq -nc --arg p "$rel" '{ok:true,reason:"no scope declared",path:$p}'; return 0
+      fi
+      for p in $(jq -r '.scope[]' < "$dir/$task.json"); do
+        if glob_match "$p" "$rel"; then
+          jq -nc --arg p "$rel" --arg g "$p" '{ok:true,path:$p,pattern:$g}'; return 0
+        fi
+      done
+      jq -nc --arg p "$rel" --arg t "$task" '{ok:false,reason:"out of scope",path:$p,task:$t}'
+      return 1
+      ;;
+    *) die "scope: verb required (set|show|check)";;
+  esac
+}
+
+# --------------------------------------------------------------------------
+cmd_config() {
+  case "${1:-show}" in
+    show) config_json;;
+    get)  shift; [ $# -gt 0 ] || die "config get: path required"; config_get "$1";;
+    file) config_file;;
+    *) die "config: show|get|file";;
+  esac
+}
+
+# --------------------------------------------------------------------------
+cmd_doctor() {
+  local root ok=0
+  root="$(project_root 2>/dev/null || true)"
+  printf 'factory home:    %s\n' "$FACTORY_HOME"
+  if [ -z "$root" ]; then printf 'project root:    NOT FOUND (run /factory:init)\n'; return 1; fi
+  printf 'project root:    %s\n' "$root"
+  printf 'config:          %s\n' "$([ -f "$(config_file)" ] && echo "$(config_file)" || echo '(defaults only)')"
+  printf 'tracker:         %s\n' "$(config_tracker)"
+  local t; t="$(config_tracker)"
+  [ -f "$FACTORY_HOME/lib/adapters/$t.sh" ] && printf 'adapter:         ok\n' || { printf 'adapter:         MISSING\n'; ok=1; }
+  case "$t" in
+    github) command -v gh >/dev/null && gh auth status >/dev/null 2>&1 && printf 'gh auth:         ok (%s)\n' "$(config_repo)" || { printf 'gh auth:         FAILED\n'; ok=1; };;
+    beads)  command -v bd >/dev/null && printf 'bd:              ok\n' || { printf 'bd:              NOT INSTALLED (brew install beads)\n'; ok=1; };;
+    jira)   [ -n "${JIRA_BASE_URL:-}" ] && [ -n "${JIRA_API_TOKEN:-}" ] && printf 'jira env:        ok\n' || { printf 'jira env:        JIRA_BASE_URL/JIRA_EMAIL/JIRA_API_TOKEN not set\n'; ok=1; };;
+  esac
+  printf 'gates:           %s\n' "$(config_get_raw gates | jq -r 'keys | join(", ") | if . == "" then "(none configured)" else . end')"
+  printf 'default branch:  %s\n' "$(config_default_branch)"
+  printf 'open tasks:      %s\n' "$(cmd_task list 2>/dev/null | jq 'map(select(.status != "done")) | length' 2>/dev/null || echo '?')"
+  return "$ok"
+}
+
+# --------------------------------------------------------------------------
+case "${1:-}" in
+  task)     shift; cmd_task "$@";;
+  gate)     shift; cmd_gate "$@";;
+  cycle)    shift; cmd_cycle "$@";;
+  escalate) shift; cmd_escalate "$@";;
+  scope)    shift; cmd_scope "$@";;
+  config)   shift; cmd_config "$@";;
+  doctor)   shift; cmd_doctor "$@";;
+  version)  printf 'factory %s\n' "$(cat "$FACTORY_HOME/VERSION" 2>/dev/null || echo dev)";;
+  -h|--help|help|"") usage;;
+  *) die "unknown command '$1' (try: factory help)";;
+esac
