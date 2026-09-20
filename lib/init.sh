@@ -78,7 +78,7 @@ cmd_init() {
   # operation: on 2026-09-20 a direct push to main swept three cycle files into
   # a commit and the revert of that commit deleted every review round recorded
   # that day. See docs/retros/2026-09-20.md.
-  printf 'locks/\ncurrent/\nscope/\ntmp/\ncycles/\n.last-gate\nhooks\n' > "$root/.factory/.gitignore"
+  printf 'locks/\ncurrent/\nscope/\ntmp/\ncycles/\ngate-retries/\n.last-gate\nhooks\n' > "$root/.factory/.gitignore"
 
   # --- config -------------------------------------------------------------
   local cfg="$root/.factory/config.json"
@@ -175,6 +175,6 @@ cmd_link() {
   mkdir -p "$root/.factory"
   rm -f "$root/.factory/hooks"
   ln -s "$FACTORY_HOME/hooks" "$root/.factory/hooks"
-  printf 'locks/\ncurrent/\nscope/\ntmp/\ncycles/\n.last-gate\nhooks\n' > "$root/.factory/.gitignore"
+  printf 'locks/\ncurrent/\nscope/\ntmp/\ncycles/\ngate-retries/\n.last-gate\nhooks\n' > "$root/.factory/.gitignore"
   jq -nc --arg root "$root" --arg state "$(factory_dir)" '{ok:true,worktree:$root,state:$state}'
 }
