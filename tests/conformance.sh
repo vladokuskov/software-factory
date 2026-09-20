@@ -80,6 +80,10 @@ MD
   check "create uses no system temp dir" \
     "$(grep -rl 'mktemp' "$FACTORY_HOME/lib/adapters" 2>/dev/null | wc -l | tr -d ' ')" "0"
 
+  # Live trackers keep what a run creates, so tidy up rather than littering the
+  # project with one epic per invocation.
+  "$F" task update "$epic" --status "done" >/dev/null 2>&1 || true
+
   rm -f "$dir/.conf-body.md" "$dir/.conf-comment.md"
 }
 
@@ -119,6 +123,7 @@ concurrency_suite() {
   local winners; winners="$(cat "$tmp"/*.json | jq -s '[.[]|select(.ok==true)]|length')"
   rm -rf "$tmp"
   check "exactly one winner" "$winners" "1"
+  "$F" task update "$task" --status "done" >/dev/null 2>&1 || true
 }
 
 scope_suite() {
