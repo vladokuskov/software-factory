@@ -174,6 +174,13 @@ escalation and completion. It exists so the retro has data instead of anecdote.
 Without it the "more than two cycles means fix the process" rule is unenforceable
 and the weekly agent has nothing to read.
 
+**A round is one review cycle, not one reviewer.** Three reviewers run in
+parallel and all belong to the same round. `factory cycle append` reuses the
+current round until a reviewer reports in it twice, and `/factory:review` passes
+`--round` explicitly. Counting per reviewer instead trips the two-round
+escalation budget on the very first pass, which is exactly what happened on the
+first real run of this factory.
+
     factory cycle count --task <id>     rounds so far
     factory cycle log --task <id>       the raw record
     factory cycle summary --since <ts>  everything, aggregated
@@ -202,12 +209,23 @@ Read these before trusting the factory unattended.
   no longer exist, and you have to tell it to respawn. Teammates cannot spawn
   teammates. Task status lags: teammates sometimes fail to mark a task complete,
   which blocks its dependents.
+- **Agent teams need an interactive session.** Under `claude -p`, Claude does not
+  spawn teammates at all: a named subagent runs as an ordinary subagent even with
+  agent teams enabled. So `/factory:run` from a script gives you parallel
+  subagents, which still gets you waves, worktrees, scopes and parallel PRs, but
+  not the shared task list, teammate-to-teammate messaging, or the `TeammateIdle`
+  guardrail. For the full team you have to run `/factory:run` in a terminal.
 - **`TeammateIdle` blocking is unresolved.** The agent-teams documentation says
   exit code 2 keeps a teammate working; the hooks reference lists the event as
   informational only. `hooks/teammate-idle.sh` emits both a `systemMessage` and
-  exit 2 so that whichever is true, the feedback lands. **This has not yet been
-  confirmed empirically against a live team** — verify it on your first real run
-  and record the answer here.
+  exit 2 so that whichever is true, the feedback lands. **Still unconfirmed
+  against a live team**, because of the point above. Verify it the first time you
+  run `/factory:run` interactively, and record the answer here.
+- **`claude ultrareview` is a hosted service and can be switched off.** It
+  currently returns `Ultrareview is currently unavailable` on this account. The
+  review skill treats that as "note it and carry on with the three local
+  reviewers", and explicitly forbids writing a cycle-log entry for a review that
+  did not run.
 - **GitHub claiming is eventually consistent, not atomic.** See
   `docs/TRACKER-ADAPTERS.md`. Every claimant converges on the same winner, but a
   loser can briefly believe it holds the task. With `beads` or the `file`
