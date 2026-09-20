@@ -21,9 +21,19 @@ factory config get observability.logPaths
 **GitHub Actions**, if enabled:
 
 ```bash
-gh run list --status failure --limit 30 --json databaseId,name,headBranch,conclusion,createdAt,event
-# then, for the ones from the last 24h on the default branch:
+gh run list --status failure --limit 30 \
+  --json databaseId,name,headBranch,headSha,conclusion,createdAt,event
+# then, for the ones from the last 24h:
 gh run view <id> --log-failed 2>/dev/null | tail -80
+```
+
+**Read the code at the run's `headSha`, not at the branch tip.** A branch gets
+force-pushed, amended and rebased; the commit that failed is often not the commit
+that is there now, and judging a failure from the wrong source is how a scanner
+reaches a confident wrong conclusion.
+
+```bash
+gh api "repos/{owner}/{repo}/contents/<path>?ref=<headSha>" --jq '.content' | base64 -d
 ```
 
 Ignore a single failure that passed on retry. Care about the same failure three

@@ -18,6 +18,12 @@ Read `.factory/config.json:observability` and use what is enabled:
   then the failing job logs for the actual error. A run that failed because a
   flaky test retried is not a finding; a run that failed the same way three times
   is.
+
+  Read the source at the run's `headSha`, never at the branch tip. Branches get
+  amended, rebased and force-pushed, so the code that failed is frequently not
+  the code that is there now. Judging a failure from the wrong commit is the
+  fastest way to a confident wrong answer, and you are running unattended, so
+  nobody will catch it.
 - **`sentry`** — if a Sentry connector is available, unresolved issues from the
   last 24 hours, ranked by event count and users affected.
 - **`logPaths`** — local log files. Look for stack traces, `ERROR`/`FATAL`, and
