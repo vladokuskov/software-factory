@@ -124,6 +124,8 @@ cycle_suite() {
 TMP="$(mktemp -d)"
 mkdir -p "$TMP/.factory"
 printf '{"tracker":"file"}\n' > "$TMP/.factory/config.json"
+LIVE_TRACKER="${FACTORY_TRACKER:-}"
+unset FACTORY_TRACKER
 run_suite "file adapter" "$TMP"
 concurrency_suite "$TMP"
 scope_suite "$TMP"
@@ -131,7 +133,9 @@ cycle_suite "$TMP"
 rm -rf "$TMP"
 
 if [ -n "${FACTORY_CONFORMANCE_REPO:-}" ]; then
-  run_suite "github adapter (live: $FACTORY_CONFORMANCE_REPO)" "$FACTORY_CONFORMANCE_REPO"
+  [ -n "$LIVE_TRACKER" ] && export FACTORY_TRACKER="$LIVE_TRACKER"
+  tracker="${LIVE_TRACKER:-$(cd "$FACTORY_CONFORMANCE_REPO" && "$F" config get tracker)}"
+  run_suite "$tracker adapter (live: $FACTORY_CONFORMANCE_REPO)" "$FACTORY_CONFORMANCE_REPO"
 fi
 
 printf '\n%s passed, %s failed\n' "$PASS" "$FAIL"

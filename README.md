@@ -18,7 +18,7 @@ catches them measurably improves week over week.
 | | |
 |---|---|
 | **`factory`** | One CLI every agent talks to. Tasks, gates, cycle log, scope, escalation. |
-| **Tracker adapters** | GitHub Issues, a local JSONL file, beads or Jira, behind one contract. Switching tracker changes no agent prompt. |
+| **Tracker adapters** | GitHub Issues, a local JSONL file, or beads, behind one contract. All three pass the same 24-check suite. Switching tracker changes no agent prompt. |
 | **7 agents** | epic lead (fable), worker (opus), three reviewers (opus/sonnet/fable), observability scanner, retro analyst. |
 | **9 skills** | `/factory:init` `epic` `run` `task` `review` `signoff` `scan` `retro` `status` |
 | **6 hooks** | Acceptance criteria enforced at task creation, file scope enforced at write time, gates run on every edit, teammates pushed back from going idle on unfinished work. |
@@ -98,8 +98,12 @@ Four of these are enforced by hooks, not by asking nicely:
 ## Development
 
 ```bash
-tests/conformance.sh                                        # file adapter, hermetic
-FACTORY_CONFORMANCE_REPO=~/projects/factory-scratch tests/conformance.sh   # + live github
+tests/conformance.sh        # file adapter, hermetic
+tests/hooks.sh              # hook behaviour, hermetic
+
+# plus a live tracker
+FACTORY_CONFORMANCE_REPO=~/projects/factory-scratch tests/conformance.sh
+FACTORY_CONFORMANCE_REPO=<beads repo> FACTORY_TRACKER=beads tests/conformance.sh
 ```
 
 `~/projects/factory-scratch` is the proving ground: a small TypeScript CLI with

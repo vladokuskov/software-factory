@@ -47,8 +47,10 @@ Claiming is what stops two agents doing the same task. The guarantees differ:
 - **`file`** — a `mkdir`-based lock around a read-modify-write. Genuinely atomic
   (`mkdir` is atomic on every POSIX filesystem; macOS has no `flock(1)`). Verified with
   12 concurrent claimants yielding exactly one winner.
-- **`beads`** — `bd update <id> --claim` is atomic first-wins in the backing store.
-  The strongest option, and the reason to pay the extra dependency for large fan-out.
+- **`beads`** — `bd update --claim` is atomic first-wins in the backing store and
+  idempotent for the holder; a losing claimant gets exit 1 and
+  `already claimed by <agent>`. The strongest guarantee of the four, and the
+  reason to pay the extra dependency for wide fan-out. Verified against bd 1.3.0.
 - **`github`** — GitHub has no compare-and-set. We use an *earliest-comment-wins*
   protocol: each claimant posts an HTML-comment marker, re-reads the thread, and the
   marker with the earliest `created_at` (ties broken by comment id) wins. Losers delete
@@ -79,11 +81,32 @@ GitHub's server-side label filter lags issue creation by a second or two and mad
 `ready` miss tasks that had just been created.
 
 ### `beads`
-Opt-in, `brew install beads`. Maps onto `bd ready --json`, `bd update --claim`, `bd dep tree`.
-All git worktrees in a repo share one `.beads` workspace, which is exactly right here:
-a worker in its own worktree sees the same queue as the lead. Issues live in an embedded
-Dolt database under `.beads/` and sync over a separate `refs/dolt/data` ref, so issue
-history never lands in your source branches.
+Opt-in: `brew install beads`, then `bd init` in the repo. Verified against bd 1.3.0.
+
+| concept | representation |
+|---|---|
+| epic | `bd create --type epic` |
+| task | `bd create --type task --parent <epic>` |
+| dependencies | real `bd` dependency edges (`--deps blocked-by:<id>`), not description text |
+| file scope | `Scope: src/**, lib/**` line in the description |
+| acceptance | the native `acceptance_criteria` field |
+| status | `open` = pending, `in_progress`, `in_progress` + `factory:review` label = review, `blocked`, `closed` = done |
+| claim | `bd update --claim` keyed on `BEADS_ACTOR`; the agent name is also written to metadata so `show` reports it back |
+| PR | `external_ref`, as `gh-<n>` |
+
+Two reasons to prefer it when fan-out gets wide:
+
+- **`bd ready` is blocker-aware in the tracker**, so dependency resolution is not
+  the adapter's job and cannot drift from what the lead believes.
+- **All git worktrees in a repo share one `.beads` workspace.** A worker in its own
+  worktree sees the same queue as the lead, with no linking step.
+
+Issues live in an embedded Dolt database under `.beads/` and sync over a separate
+`refs/dolt/data` ref, so issue history never lands in your source branches.
+
+Two things to know before adopting it: beads has no built-in `review` status, so
+the adapter uses `in_progress` plus a `factory:review` label; and beads sends
+anonymous command-usage metrics by default, which `bd metrics off` disables.
 
 ### `jira`
 Jira Cloud REST over `curl`, configured with `JIRA_BASE_URL`, `JIRA_EMAIL`, `JIRA_API_TOKEN`
@@ -95,6 +118,13 @@ because MCP tools only exist inside a Claude session, and hooks, launchd jobs an
 
 1. Copy `lib/adapters/file.sh` (the reference implementation).
 2. Implement every `adapter_*` function in the table above.
-3. `FACTORY_TRACKER=yours tests/conformance.sh` must pass 27/27 plus the concurrency check.
+3. The contract suite must pass against it:
+
+       cd <a repo configured for your tracker>
+       FACTORY_CONFORMANCE_REPO=$PWD FACTORY_TRACKER=yours tests/conformance.sh
+
+   All 24 contract checks must be green, including `link-pr round-trips`, which
+   exists because the github adapter once reported `ok:true` for a write that
+   `show` could not read back.
 4. Document the claim guarantee honestly in this file. An adapter that cannot make
    claiming safe should say so, because `escalation.maxParallel` depends on it.
