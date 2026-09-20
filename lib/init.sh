@@ -136,6 +136,16 @@ cmd_init() {
     printf 'wrote   %s\n' "$settings"
   fi
 
+  # --- .gitignore ---------------------------------------------------------
+  # .claude/worktrees/ holds live git worktrees. Committing them turns each one
+  # into an embedded repository, which is confusing to undo and easy to do by
+  # accident with `git add -A`.
+  local gi="$root/.gitignore" line=".claude/worktrees/"
+  if ! grep -qxF "$line" "$gi" 2>/dev/null; then
+    { [ -f "$gi" ] && cat "$gi"; printf '%s\n' "$line"; } > "$gi.tmp" && mv "$gi.tmp" "$gi"
+    printf 'wrote   %s (ignoring %s)\n' "$gi" "$line"
+  fi
+
   # --- CLAUDE.md ----------------------------------------------------------
   local claudemd="$root/CLAUDE.md"
   if ! grep -q '^## Software factory' "$claudemd" 2>/dev/null; then
