@@ -14,13 +14,22 @@ FACTORY_DEFAULTS='{
   "gates": {},
   "gateOrder": ["format", "lint", "typecheck", "test", "build"],
   "models": {
-    "lead": "fable",
+    "lead": "opus[1m]",
     "worker": "opus",
     "reviewAdversarial": "opus",
     "reviewQuality": "sonnet",
     "reviewIntent": "fable",
     "scanner": "sonnet",
     "retro": "fable"
+  },
+  "effort": {
+    "lead": "max",
+    "worker": "high",
+    "reviewAdversarial": "high",
+    "reviewQuality": "medium",
+    "reviewIntent": "high",
+    "scanner": "medium",
+    "retro": "high"
   },
   "escalation": {
     "maxReviewCycles": 2,

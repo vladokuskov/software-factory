@@ -1,7 +1,8 @@
 # software-factory
 
 A Claude Code plugin that runs a repository as an agentic software factory:
-epics planned on Fable, a team of Opus workers in isolated git worktrees,
+epics planned by a lead on Opus 1M at max effort, a team of Opus workers in
+isolated git worktrees,
 adversarial multi-model review, a concrete escalation ladder, and two agents that
 run unattended to keep the thing honest.
 
@@ -19,7 +20,7 @@ catches them measurably improves week over week.
 |---|---|
 | **`factory`** | One CLI every agent talks to. Tasks, gates, cycle log, scope, escalation, handoffs. |
 | **Tracker adapters** | GitHub Issues, a local JSONL file, beads, or Jira, behind one contract. Switching tracker changes no agent prompt. The first three pass the same suite live (68 checks); Jira is written but unverified. |
-| **7 agents** | epic lead (fable), worker (opus), three reviewers (opus/sonnet/fable), observability scanner, retro analyst. |
+| **7 agents** | epic lead (opus 1M, max effort), worker (opus), three reviewers (opus/sonnet/fable), observability scanner, retro analyst. Every model and effort level is per-role config. |
 | **9 skills** | `/factory:init` `epic` `run` `task` `review` `signoff` `scan` `retro` `status` |
 | **6 hooks** | Acceptance criteria enforced at task creation, file scope enforced at write time, gates run on every edit, teammates pushed back from going idle on unfinished work. |
 | **The cycle log** | Every review round, escalation and gate failure, recorded. The dataset the weekly retro reads. |
@@ -48,7 +49,7 @@ rules into `CLAUDE.md`. Re-runnable.
 ```
 /factory:status                          what is ready, in flight, or waiting on you
 /factory:task    <task-id>               one task to a reviewed PR     (~$4)
-/factory:epic    <a goal, in prose>      plan an epic, interactive     (fable)
+/factory:epic    <a goal, in prose>      plan an epic, interactive     (opus 1M, max)
 /factory:run     <epic-id>               dispatch a wave of workers    (~$6/task)
 /factory:signoff <pr>                    the lead's final pass before you merge
 ```

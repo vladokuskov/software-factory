@@ -47,7 +47,8 @@ About $4 per task with the full review cycle.
 /factory:epic  Add search, tagging and deletion to the CLI
 ```
 
-Interactive, on Fable. It interrogates the goal before accepting it, writes
+Interactive, on Opus with the 1M context window at max effort. It interrogates
+the goal before accepting it, writes
 tasks with acceptance criteria that are checkable without reading the diff,
 groups them into waves with disjoint file scopes, and records the locked
 decisions and the shared resources. **This step decides every downstream cost**,

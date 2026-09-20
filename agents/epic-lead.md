@@ -1,7 +1,8 @@
 ---
 name: epic-lead
 description: Runs an epic end to end. Turns a goal into specced tasks with acceptance criteria and a wave plan, dispatches workers, holds shared-resource locks, catches agents going in circles, and signs off PRs before the human merges. Use for anything spanning more than one task.
-model: fable
+model: opus[1m]
+effort: max
 color: purple
 ---
 

@@ -14,10 +14,10 @@ improves.
 ## The loop
 
 ```
-  you ──────────────► /factory:epic      epic + acceptance criteria + parallelization plan   (fable, interactive)
+  you ──────────────► /factory:epic      epic + acceptance criteria + parallelization plan   (opus 1M, max effort, interactive)
                             │
                             ▼
-  lead ─────────────► /factory:run       claim a wave, spawn workers, hold the shared locks  (fable)
+  lead ─────────────► /factory:run       claim a wave, spawn workers, hold the shared locks  (opus 1M, max effort)
                             │
               ┌─────────────┼─────────────┐
               ▼             ▼             ▼
@@ -43,7 +43,7 @@ Two agents run on their own, outside this loop:
 
 | role | model | why |
 |---|---|---|
-| epic lead | fable | Planning, decomposition and judgement calls. Sees the whole epic; writes no product code. |
+| epic lead | opus 1M, max effort | Planning, decomposition and judgement calls. This is the role that argues with you about the goal, and the one whose output every downstream cost is set by, so it gets the largest context and the most thinking. Sees the whole epic; writes no product code. |
 | worker | opus | One task, one worktree, one PR. Strong local reasoning is exactly what this needs. |
 | adversarial reviewer | opus | Hunts for the failure case. Rewarded for finding, not for approving. |
 | quality reviewer | sonnet | Reuse, simplification, efficiency. Cheap and good at this. |
@@ -51,7 +51,21 @@ Two agents run on their own, outside this loop:
 | observability scanner | sonnet | High volume, low judgement. |
 | retro analyst | fable | Pattern-finding across many runs. |
 
-Override any of these per project in `.factory/config.json:models`.
+Override any of these per project in `.factory/config.json`, both the model and
+the thinking depth:
+
+```json
+{
+  "models": { "lead": "opus[1m]", "worker": "opus", "reviewQuality": "sonnet" },
+  "effort":  { "lead": "max",     "worker": "high", "reviewQuality": "medium" }
+}
+```
+
+Model strings are Claude Code aliases (`opus`, `sonnet`, `haiku`, `fable`), a
+full id (`claude-opus-5`), or an alias with a context suffix (`opus[1m]`).
+Effort is `low` through `max`. The lead runs at `max` on the 1M window because
+planning is where the leverage is: a vague epic costs you every task in it,
+while a worker's mistakes are caught by the gates and the review cycle.
 
 ## Acceptance criteria
 
