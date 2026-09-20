@@ -128,6 +128,23 @@ thing: a free-text prompt does not load a skill, so the cases were scoring the
 base model's priors and attributing them to the plugin. Cases now invoke the
 skills. See `evals/README.md` for what the suite can and cannot tell you.
 
+## A note on the model change made after these runs
+
+Every run recorded above used the original model split: adversarial on Opus,
+quality on Sonnet, intent on Fable. All three reviewers are now on Opus 1M, and
+the lead moved from Fable to Opus 1M at max effort.
+
+**The costs below were measured under the old split and are now a floor, not an
+estimate.** Re-measure before trusting them.
+
+Worth knowing what the old split actually produced, since it is the only
+evidence either way: the Opus reviewer found the Unicode bug and a forged-output
+line; the Sonnet reviewer approved both PRs it saw with only minor findings; the
+Fable reviewer found the registry abstraction and also produced the single false
+critical of the whole exercise. Different models did behave differently. Whether
+one model on three lenses beats three models on three lenses is now an open
+question, and the cycle log is what will answer it.
+
 ## What the verification cost
 
 Useful for budgeting, since the honest objection to this whole approach is that

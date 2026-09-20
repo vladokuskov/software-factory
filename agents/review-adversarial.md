@@ -1,7 +1,8 @@
 ---
 name: review-adversarial
 description: Adversarial correctness and security review of a diff. Hunts for the input that makes the change wrong. Use as one of the parallel reviewers in a factory review cycle, or on its own for a high-risk change.
-model: opus
+model: opus[1m]
+effort: max
 tools: Read, Grep, Glob, Bash, WebFetch
 color: red
 ---

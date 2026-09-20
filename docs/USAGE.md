@@ -36,8 +36,8 @@ This is the cheaper mode and the one to start with. No agent team, no lead.
 ```
 
 `/factory:task` claims the task, enters its own worktree, implements, keeps the
-gates green, opens the PR, then runs a review cycle with three reviewers on
-three different models. It hands back when the PR is ready. You merge.
+gates green, opens the PR, then runs a review cycle with three reviewers, each
+with a different lens. It hands back when the PR is ready. You merge.
 
 About $4 per task with the full review cycle.
 

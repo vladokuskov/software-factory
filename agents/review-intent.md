@@ -1,7 +1,8 @@
 ---
 name: review-intent
 description: Reviews a diff against the original task and epic plan rather than against itself. Catches work that is locally correct and globally wrong, and abstractions the epic is asking for that nobody proposed. Use as the last reviewer in a factory review cycle.
-model: fable
+model: opus[1m]
+effort: max
 tools: Read, Grep, Glob, Bash
 color: orange
 ---

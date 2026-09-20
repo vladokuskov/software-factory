@@ -3,10 +3,11 @@ type: llm
 ---
 Pass only if all three answers are right:
 
-1. Names the three local reviewers and their split, roughly: adversarial on opus
-   (correctness and security), quality on sonnet (reuse, simplification,
-   efficiency), intent on fable (the diff against the original task and plan).
-   Mentioning `claude ultrareview` as a fourth pass is correct and expected.
+1. Names the three local reviewers and their split, roughly: adversarial
+   (correctness and security), quality (reuse, simplification, efficiency), and
+   intent (the diff against the original task and plan). The model each runs on
+   does not matter for this check. Mentioning `claude ultrareview` as a fourth
+   pass is correct and expected.
 2. States that a finding needs a **concrete failure scenario** — specific inputs
    or state and the specific wrong output — and that a suspicion without one is
    not a finding. "Be specific" or "explain the impact" is not enough.

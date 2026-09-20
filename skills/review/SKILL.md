@@ -31,10 +31,11 @@ before reviewing. This round should probably be an escalation instead.
 Launch all three as subagents **in one message**, so they run concurrently and
 cannot anchor on each other:
 
-- **`review-adversarial`** (opus) — correctness and security. Every finding
-  needs a concrete failure scenario.
-- **`review-quality`** (sonnet) — reuse, simplification, efficiency.
-- **`review-intent`** (fable) — the diff against the original task and plan.
+- **`review-adversarial`** (opus 1M, max effort) — correctness and security.
+  Every finding needs a concrete failure scenario.
+- **`review-quality`** (opus 1M, high effort) — reuse, simplification, efficiency.
+- **`review-intent`** (opus 1M, max effort) — the diff against the original task
+  and plan.
 
 Give each: the PR number, the diff, the task with its acceptance criteria, and
 the locked decisions. They do not share your context.

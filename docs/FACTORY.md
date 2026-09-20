@@ -45,9 +45,9 @@ Two agents run on their own, outside this loop:
 |---|---|---|
 | epic lead | opus 1M, max effort | Planning, decomposition and judgement calls. This is the role that argues with you about the goal, and the one whose output every downstream cost is set by, so it gets the largest context and the most thinking. Sees the whole epic; writes no product code. |
 | worker | opus | One task, one worktree, one PR. Strong local reasoning is exactly what this needs. |
-| adversarial reviewer | opus | Hunts for the failure case. Rewarded for finding, not for approving. |
-| quality reviewer | sonnet | Reuse, simplification, efficiency. Cheap and good at this. |
-| intent reviewer | fable | Checks the diff against the original plan, not against itself. |
+| adversarial reviewer | opus 1M, max effort | Hunts for the failure case. Rewarded for finding, not for approving. |
+| quality reviewer | opus 1M, high effort | Reuse, simplification, efficiency. `high` rather than `max` because this pass is recognition, not deduction. |
+| intent reviewer | opus 1M, max effort | Checks the diff against the original plan, not against itself. Reads the whole epic, so it needs the window. |
 | observability scanner | sonnet | High volume, low judgement. |
 | retro analyst | fable | Pattern-finding across many runs. |
 
@@ -170,13 +170,13 @@ problem.
 
 Every PR gets, in parallel:
 
-1. **adversarial** (opus) — correctness and security. Its job is to find the
+1. **adversarial** (opus 1M, max) — correctness and security. Its job is to find the
    failure case, and it is instructed to give a concrete input-to-wrong-output
    scenario for every finding. A review that approves without having tried to
    break the change has not been done.
-2. **quality** (sonnet) — reuse, simplification, efficiency. Is there already a
+2. **quality** (opus 1M, high) — reuse, simplification, efficiency. Is there already a
    function for this? Is this the simplest thing that works?
-3. **intent** (fable) — the diff against the *original task and plan*. This is
+3. **intent** (opus 1M, max) — the diff against the *original task and plan*. This is
    the pass that catches the thing local reasoning cannot see: a change that is
    locally correct and globally wrong, or a chance to build an abstraction that
    makes the rest of the epic easy. It is the deliberate answer to the known

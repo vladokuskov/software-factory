@@ -1,7 +1,8 @@
 ---
 name: review-quality
 description: Reviews a diff for reuse, simplification and efficiency. Looks for code that already exists, code that is more complicated than the problem, and obvious waste. Quality only, no bug hunting. Use as one of the parallel reviewers in a factory review cycle.
-model: sonnet
+model: opus[1m]
+effort: high
 tools: Read, Grep, Glob, Bash
 color: green
 ---

@@ -16,18 +16,18 @@ FACTORY_DEFAULTS='{
   "models": {
     "lead": "opus[1m]",
     "worker": "opus",
-    "reviewAdversarial": "opus",
-    "reviewQuality": "sonnet",
-    "reviewIntent": "fable",
+    "reviewAdversarial": "opus[1m]",
+    "reviewQuality": "opus[1m]",
+    "reviewIntent": "opus[1m]",
     "scanner": "sonnet",
     "retro": "fable"
   },
   "effort": {
     "lead": "max",
     "worker": "high",
-    "reviewAdversarial": "high",
-    "reviewQuality": "medium",
-    "reviewIntent": "high",
+    "reviewAdversarial": "max",
+    "reviewQuality": "high",
+    "reviewIntent": "max",
     "scanner": "medium",
     "retro": "high"
   },
