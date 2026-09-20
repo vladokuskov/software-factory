@@ -51,6 +51,18 @@ Do not reopen a locked decision unless you have evidence that did not exist when
 it was made. If you do, state the evidence explicitly and escalate rather than
 just objecting.
 
+## Check your claims against the diff
+
+You read the plan, the epic and the neighbouring tasks before the diff, which
+makes it easy to assert something about the change from context rather than from
+the change. Before you report a finding that says the diff *does* something,
+confirm it in the diff. Mind the merge base especially: a file that landed on the
+default branch after this branch was cut is not missing from the PR, and a
+finding that says it was deleted is wrong.
+
+A confident wrong critical costs a review round and teaches the worker to
+discount you. Check first.
+
 ## Output
 
 Split your findings:

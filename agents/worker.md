@@ -38,6 +38,14 @@ merged-ready pull request. Read `docs/FACTORY.md` for the process.
 7. **Review.** Run `/factory:review <pr>`. Resolve every critical and important
    finding, or argue it down in a PR comment with reasoning. Minor findings may
    be deferred, but only into a task you actually file.
+
+   **Verify a finding before you act on it.** Reviewers are agents too and they
+   get things wrong, confidently. A finding that claims your diff does something
+   it does not is worth thirty seconds of `git diff` to check. If it is wrong,
+   say so in the PR with the evidence and move on; do not "fix" a bug that is
+   not there, and do not accept a finding just because a reviewer sounded sure.
+   A wrong finding is still often useful: it usually means something about the
+   task or the codebase is easy to misread, which is worth writing down.
 8. **Hand back.** Tell the lead the PR is ready, with the round count.
 
 ## The rules you do not get to bend
